@@ -1,0 +1,13 @@
+[Unit]
+Description=Wlan Mode Switcher
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/tmp/pink-0/src_raffi
+ExecStart=/home/pi/tmp/pink-0/src_raffi/wlan-mode.sh
+
+[Install]
+WantedBy=multi-user.target
+

@@ -20,9 +20,8 @@
 
 namespace
 {
-
-const unsigned kPinLedTempo{15};   // BCM 14
 const unsigned kPinLedLength{9};   // BCM 3
+const unsigned kPinLedTempo{28};   // BCM 20(wPI20) instead of 14 (wPI15) - raffi-luki
 const unsigned kPinLedPPQN{8};     // BCM 2
 const unsigned kPinLedRunning{11}; // BCM 7
 
@@ -129,7 +128,9 @@ inline void writeToDisplay(unsigned digit_, char c_, bool dot_)
 {
   for (unsigned i = 0; i < kDisplayNumDigits; i++)
   {
-    digitalWrite(kPinDisplayDigits[i], (i == digit_ ? LOW : HIGH));
+// raffimod - low und high vertauschen
+//  digitalWrite(kPinDisplayDigits[i], (i == digit_ ? LOW : HIGH));
+    digitalWrite(kPinDisplayDigits[i], (i == digit_ ? HIGH : LOW));
   }
 
   uint8_t charNum = static_cast<uint8_t>(c_);
@@ -142,7 +143,9 @@ inline void writeToDisplay(unsigned digit_, char c_, bool dot_)
   {
     for (unsigned i = 0; i < kDisplayNumSegments; i++)
     {
-      digitalWrite(kPinDisplaySegments[i], LOW);
+// raffimod - von LOW auf HIGH umgestellt wegen bubbledisplay replacement ACSA02
+//    digitalWrite(kPinDisplaySegments[i], LOW);
+      digitalWrite(kPinDisplaySegments[i], HIGH);
     }
   }
   else
@@ -150,7 +153,9 @@ inline void writeToDisplay(unsigned digit_, char c_, bool dot_)
     auto charData = kDisplayFontData[charNum - 45] | (dot_ ? 0b10000000 : 0);
     for (unsigned i = 0; i < kDisplayNumSegments; i++)
     {
-      digitalWrite(kPinDisplaySegments[i], ((charData & (1 << i)) > 0) ? HIGH : LOW);
+// raffimod - von LOW auf HIGH umgestellt wegen bubbledisplay replacement ACSA02
+//    digitalWrite(kPinDisplaySegments[i], ((charData & (1 << i)) > 0) ? HIGH : LOW);
+      digitalWrite(kPinDisplaySegments[i], ((charData & (1 << i)) > 0) ? LOW : HIGH);
     }
   }
 }
