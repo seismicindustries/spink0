@@ -81,7 +81,9 @@ echo ""
 echo -e "[ \033[1m\033[96mpink\033[m ] Install RaspAP --------------------------------------------------------"
 if [ $platform == "linux-rpi" ];
   then
-    wget -q https://git.io/vDr0i -O /tmp/raspap && bash /tmp/raspap
+#    wget -q https://git.io/vDr0i -O /tmp/raspap && bash /tmp/raspap
+#    new raspap source - other link doesn't work
+     wget -q https://git.io/voEUQ -O /tmp/raspap && bash /tmp/raspap
 fi
 
 echo ""
