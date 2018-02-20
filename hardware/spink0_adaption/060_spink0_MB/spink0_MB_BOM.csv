@@ -1,0 +1,24 @@
+Refs,Value,Footprint,QTY,MFR,MPN,SPR,SPN
+C1,22u,raffilibkicad:CP_Elec_5x5.3,1,Panasonic,EEE-FK1C220R,Mouser,667-EEE-FK1C220R
+C6,22u,raffilibkicad:CP_Elec_7.3x4.3,1,Panasonic,EEF-HX1D220R,Mouser,667-EEF-HX1D220R
+C7,100n,raffilibkicad:C_0805,1,AVX,08055C104KAT2A,Mouser,581-08055C104K
+C3,1u,raffilibkicad:C_0805,1,Taiyo Yuden,UMK212B7105KG-T,Mouser,963-UMK212B7105KG-T
+C4;C5,33n,raffilibkicad:C_0805,2,Kemet,C0805C333K5RACTU,Mouser,80-C0805C333K5R
+L1,INDUCTOR,raffilibkicad:Inductor_PSU_NLCV32T,1,TDK,NLCV32T-R10M-PFR,Mouser,810-NLCV32T-R10M-PFR
+L3,6.8uH,raffilibkicad:Inductor_SRN4018TA_bourns,1,Bourns,SRN4018TA-6R8M,Mouser,652-SRN4018TA-6R8M
+D2;D1,LED,raffilibkicad:LED_D3.0mm,2,Lite-On,LTL-4231N,Mouser,859-LTL-4231N
+P2;P4,CONN_02X05,raffilibkicad:PINHEAD_10_pin_jtag_connector,2,Amphenol FCI,20021111-00010T4LF,Mouser,649-221111-00010T4LF
+J1,PI_ZERO,raffilibkicad:PI_ZERO,1,,,your PI supplier,
+P1,CONN_02X05,raffilibkicad:Pin_Header_Angled_2x05_Pitch2.54mm_with_space_for_con,1,Amphenol FCI,649-68020-110HLF,Mouser,68020-110HLF
+R16,100k,raffilibkicad:R_0805,1,Yageo,RC0805FR-07100KL,Mouser,603-RC0805FR-07100KL
+R5;R6;R21;R24;R23,10k,raffilibkicad:R_0805,5,Vishay,CRCW080510K0FKEAC,Mouser,71-CRCW080510K0FKEAC
+R10;R7;R9;R8;R12;R11;R13;R4;R14;R15;R17;R18,1k,raffilibkicad:R_0805,12,Vishay,CRCW08051K00FKEAC,Mouser,71-CRCW08051K00FKEAC
+R22,220,raffilibkicad:R_0805,1,Bourns,CR0805-FX-2200GLF,Mouser,652-CR0805-FX2200GLF
+R2,40k2,raffilibkicad:R_0805,1,Yageo,RC0805FR-0740K2L,Mouser,603-RC0805FR-0740K2L
+R1,75k,raffilibkicad:R_0805,1,Vishay,CRCW080575K0FKEA,Mouser,71-CRCW0805-75K-E3
+R3,7k68,raffilibkicad:R_0805,1,Yageo,RC0805FR-077K68L,Mouser,603-RC0805FR-077K68L
+Q1;Q2;Q3;Q4,BC849,raffilibkicad:SOT-23,4,,,Mouser,771-BC849C-T/R
+U1,MP1469,raffilibkicad:SOT-23-6,1,MPS,MP1469GJ-Z,Mouser,946-MP1469GJZ
+U2,MCP6004,raffilibkicad:TSSOP-14_4.4x5mm_Pitch0.65mm,1,Microchip Techology,MCP6004-I/ST,Mouser,579-MCP6004-I/ST
+CLK_OUT1;RST_OUT1;MIDI_OUT1,JACK_QINGPU,raffilibkicad:jack_qingpu,3,,,,
+J6;J5;J8;J7,GS3,raffilibkicad:solderbridge,4,,,,

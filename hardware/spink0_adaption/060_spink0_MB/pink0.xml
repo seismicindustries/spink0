@@ -1,0 +1,1233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<export version="D">
+  <design>
+    <source>/Users/raffi_old/Documents/Projects_Electronix/seismic_industries/008b_KICAD/060_pink0/pink0.sch</source>
+    <date>2018 January 25, Thursday 16:18:10</date>
+    <tool>Eeschema 4.0.6</tool>
+    <sheet number="1" name="/" tstamps="/">
+      <title_block>
+        <title/>
+        <company/>
+        <rev/>
+        <date/>
+        <source>pink0.sch</source>
+        <comment number="1" value=""/>
+        <comment number="2" value=""/>
+        <comment number="3" value=""/>
+        <comment number="4" value=""/>
+      </title_block>
+    </sheet>
+  </design>
+  <components>
+    <comp ref="J1">
+      <value>PI_ZERO</value>
+      <footprint>raffilibkicad:PI_ZERO</footprint>
+      <fields>
+        <field name="SPR">from your desired dealer</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="PI_ZERO"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>599977E6</tstamp>
+    </comp>
+    <comp ref="P1">
+      <value>CONN_02X05</value>
+      <footprint>raffilibkicad:Pin_Header_Angled_2x05_Pitch2.54mm_with_space_for_con</footprint>
+      <datasheet>1.61</datasheet>
+      <fields>
+        <field name="MFR">Molex</field>
+        <field name="MPN">71764-0010 / MC34769</field>
+        <field name="SPR">Mouser / Farnell</field>
+        <field name="SPN">538-71764-0010 / 1593451</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="CONN_02X05"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5999780D</tstamp>
+    </comp>
+    <comp ref="L1">
+      <value>INDUCTOR</value>
+      <footprint>raffilibkicad:Inductor_PSU_NLCV32T</footprint>
+      <fields>
+        <field name="MFR">TDK</field>
+        <field name="MPN">NLCV32T-R10M-PFR</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">810-NLCV32T-R10M-PFR</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="INDUCTOR"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5999784A</tstamp>
+    </comp>
+    <comp ref="C1">
+      <value>22u</value>
+      <footprint>raffilibkicad:CP_Elec_5x5.3</footprint>
+      <fields>
+        <field name="MFR">Panasonic</field>
+        <field name="MPN">EEE-FK1C220R</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">667-EEE-FK1C220R</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="CP"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>599978B8</tstamp>
+    </comp>
+    <comp ref="CLK_OUT1">
+      <value>JACK_QINGPU</value>
+      <footprint>raffilibkicad:jack_qingpu</footprint>
+      <fields/>
+      <libsource lib="raffilibkicad" part="JACK_QINGPU"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5999DAF4</tstamp>
+    </comp>
+    <comp ref="RST_OUT1">
+      <value>JACK_QINGPU</value>
+      <footprint>raffilibkicad:jack_qingpu</footprint>
+      <fields/>
+      <libsource lib="raffilibkicad" part="JACK_QINGPU"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5999DB4B</tstamp>
+    </comp>
+    <comp ref="MIDI_OUT1">
+      <value>JACK_QINGPU</value>
+      <footprint>raffilibkicad:jack_qingpu</footprint>
+      <fields/>
+      <libsource lib="raffilibkicad" part="JACK_QINGPU"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>599A9E76</tstamp>
+    </comp>
+    <comp ref="P2">
+      <value>CONN_02X05</value>
+      <footprint>raffilibkicad:PINHEAD_10_pin_jtag_connector</footprint>
+      <fields>
+        <field name="MFR">Amphenol FCI</field>
+        <field name="MPN">20021111-00010T4LF</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">649-221111-00010T4LF</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="CONN_02X05"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A7A6F6</tstamp>
+    </comp>
+    <comp ref="Q1">
+      <value>BC849</value>
+      <footprint>raffilibkicad:SOT-23</footprint>
+      <datasheet>0.206</datasheet>
+      <fields>
+        <field name="MFR">Nexperia</field>
+        <field name="MPN">BC849C,215</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">771-BC849C-T/R</field>
+      </fields>
+      <libsource lib="pink0-cache" part="BC849"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A7EE05</tstamp>
+    </comp>
+    <comp ref="Q2">
+      <value>BC849</value>
+      <footprint>raffilibkicad:SOT-23</footprint>
+      <datasheet>0.206</datasheet>
+      <fields>
+        <field name="MFR">Nexperia</field>
+        <field name="MPN">BC849C,215</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">771-BC849C-T/R</field>
+      </fields>
+      <libsource lib="pink0-cache" part="BC849"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A7EF7D</tstamp>
+    </comp>
+    <comp ref="R10">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A814A4</tstamp>
+    </comp>
+    <comp ref="R7">
+      <value>100k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW0805100KFKEB</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805100KFKEB</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A8155C</tstamp>
+    </comp>
+    <comp ref="R9">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A815E3</tstamp>
+    </comp>
+    <comp ref="R8">
+      <value>100k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW0805100KFKEB</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805100KFKEB</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A81673</tstamp>
+    </comp>
+    <comp ref="R12">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A818AF</tstamp>
+    </comp>
+    <comp ref="R11">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A8194C</tstamp>
+    </comp>
+    <comp ref="C4">
+      <value>33n</value>
+      <footprint>raffilibkicad:C_0805</footprint>
+      <datasheet>0.128</datasheet>
+      <fields>
+        <field name="MFR">AVX</field>
+        <field name="MPN">08055C333KAT4A</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">581-08055C333KAT4A</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="C"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A81D2E</tstamp>
+    </comp>
+    <comp ref="C5">
+      <value>33n</value>
+      <footprint>raffilibkicad:C_0805</footprint>
+      <datasheet>0.128</datasheet>
+      <fields>
+        <field name="MFR">AVX</field>
+        <field name="MPN">08055C333KAT4A</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">581-08055C333KAT4A</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="C"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A81DD1</tstamp>
+    </comp>
+    <comp ref="R5">
+      <value>10k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW080510K0FKEAC</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW080510K0FKEAC</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A837C8</tstamp>
+    </comp>
+    <comp ref="R6">
+      <value>10k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW080510K0FKEAC</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW080510K0FKEAC</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59A83870</tstamp>
+    </comp>
+    <comp ref="R22">
+      <value>220</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW0805220RFKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-220-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59B971C9</tstamp>
+    </comp>
+    <comp ref="R21">
+      <value>10k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW080510K0FKEAC</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW080510K0FKEAC</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59B97A87</tstamp>
+    </comp>
+    <comp ref="Q3">
+      <value>BC849</value>
+      <footprint>raffilibkicad:SOT-23</footprint>
+      <datasheet>0.206</datasheet>
+      <fields>
+        <field name="MFR">Nexperia</field>
+        <field name="MPN">BC849C,215</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">771-BC849C-T/R</field>
+      </fields>
+      <libsource lib="pink0-cache" part="BC849"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59BA4008</tstamp>
+    </comp>
+    <comp ref="P4">
+      <value>CONN_02X05</value>
+      <footprint>raffilibkicad:PINHEAD_10_pin_jtag_connector</footprint>
+      <fields>
+        <field name="MFR">Amphenol FCI</field>
+        <field name="MPN">20021111-00010T4LF</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">649-221111-00010T4LF</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="CONN_02X05"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59C3F0B0</tstamp>
+    </comp>
+    <comp ref="J6">
+      <value>GS3</value>
+      <footprint>raffilibkicad:solderbridge</footprint>
+      <fields/>
+      <libsource lib="pink0-cache" part="GS3"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59C44969</tstamp>
+    </comp>
+    <comp ref="J5">
+      <value>GS3</value>
+      <footprint>raffilibkicad:solderbridge</footprint>
+      <fields/>
+      <libsource lib="pink0-cache" part="GS3"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59C44CD0</tstamp>
+    </comp>
+    <comp ref="Q4">
+      <value>BC849</value>
+      <footprint>raffilibkicad:SOT-23</footprint>
+      <datasheet>0.206</datasheet>
+      <fields>
+        <field name="MFR">Nexperia</field>
+        <field name="MPN">BC849C,215</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">771-BC849C-T/R</field>
+      </fields>
+      <libsource lib="pink0-cache" part="BC849"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59C60320</tstamp>
+    </comp>
+    <comp ref="R24">
+      <value>10k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW080510K0FKEAC</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW080510K0FKEAC</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59C6042F</tstamp>
+    </comp>
+    <comp ref="R23">
+      <value>10k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW080510K0FKEAC</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW080510K0FKEAC</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>59C605FB</tstamp>
+    </comp>
+    <comp ref="C6">
+      <value>100u</value>
+      <footprint>raffilibkicad:CP_Elec_7.3x4.3</footprint>
+      <datasheet>1.09</datasheet>
+      <fields>
+        <field name="MFR">AVX Kyocera</field>
+        <field name="MPN">TCJY107M010R0055</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">581-TCJY107M010R0055</field>
+        <field name="SPURL">asdf</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="CP"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A002595</tstamp>
+    </comp>
+    <comp ref="L3">
+      <value>6.8uH</value>
+      <footprint>raffilibkicad:Inductor_SRN4018TA_bourns</footprint>
+      <fields>
+        <field name="MFR">Bourns</field>
+        <field name="MPN">SRN4018TA-6R8M</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">652-SRN4018TA-6R8M</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="INDUCTOR"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A002626</tstamp>
+    </comp>
+    <comp ref="C3">
+      <value>1u</value>
+      <footprint>raffilibkicad:C_0805</footprint>
+      <datasheet>0.184</datasheet>
+      <fields>
+        <field name="MFR">Taiyo Yuden</field>
+        <field name="MPN">UMK212B7105KG-T</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">963-UMK212B7105KG-T</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="C"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A0028F3</tstamp>
+    </comp>
+    <comp ref="R2">
+      <value>40k2</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">71-RCA080540K2FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">RCA080540K2FKEA</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A002A43</tstamp>
+    </comp>
+    <comp ref="R3">
+      <value>7k68</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08057K68FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-7.68K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A002B0C</tstamp>
+    </comp>
+    <comp ref="R1">
+      <value>75k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW080575K0FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-75K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A002BEE</tstamp>
+    </comp>
+    <comp ref="J8">
+      <value>GS3</value>
+      <footprint>raffilibkicad:solderbridge</footprint>
+      <fields/>
+      <libsource lib="pink0-cache" part="GS3"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A016DFE</tstamp>
+    </comp>
+    <comp ref="J7">
+      <value>GS3</value>
+      <footprint>raffilibkicad:solderbridge</footprint>
+      <fields/>
+      <libsource lib="pink0-cache" part="GS3"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A016EA6</tstamp>
+    </comp>
+    <comp ref="U2">
+      <value>MCP6004</value>
+      <footprint>raffilibkicad:TSSOP-14_4.4x5mm_Pitch0.65mm</footprint>
+      <fields>
+        <field name="MFR">Microchip Techology</field>
+        <field name="MPN">MCP6004-I/ST</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">579-MCP6004-I/ST</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="MCP6004"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A0174B4</tstamp>
+    </comp>
+    <comp ref="R13">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A0175FE</tstamp>
+    </comp>
+    <comp ref="R4">
+      <value>2k2</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08052K20FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-2.2K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A017A42</tstamp>
+    </comp>
+    <comp ref="R14">
+      <value>2k2</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08052K20FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-2.2K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A0188CA</tstamp>
+    </comp>
+    <comp ref="R15">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A018982</tstamp>
+    </comp>
+    <comp ref="C7">
+      <value>100n</value>
+      <footprint>raffilibkicad:C_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">AVX</field>
+        <field name="MPN">08055C104KAT2A</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">581-08055C104K</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="C"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A03338E</tstamp>
+    </comp>
+    <comp ref="R16">
+      <value>100k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW0805100KFKEB</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805100KFKEB</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A661692</tstamp>
+    </comp>
+    <comp ref="R17">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A6766CF</tstamp>
+    </comp>
+    <comp ref="R18">
+      <value>1k</value>
+      <footprint>raffilibkicad:R_0805</footprint>
+      <datasheet>0.098</datasheet>
+      <fields>
+        <field name="MFR">Vishay</field>
+        <field name="MPN">CRCW08051K00FKEA</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">71-CRCW0805-1.0K-E3</field>
+      </fields>
+      <libsource lib="raffilibkicad" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A67679B</tstamp>
+    </comp>
+    <comp ref="D2">
+      <value>LED</value>
+      <footprint>raffilibkicad:LED_D3.0mm</footprint>
+      <datasheet>0.23</datasheet>
+      <fields>
+        <field name="MFR">Lite-ON</field>
+        <field name="MPN">LTW-420D7</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">859-LTW-420D7</field>
+      </fields>
+      <libsource lib="pink0-rescue" part="LED-RESCUE-pink0"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A676858</tstamp>
+    </comp>
+    <comp ref="D1">
+      <value>LED</value>
+      <footprint>raffilibkicad:LED_D3.0mm</footprint>
+      <datasheet>0.23</datasheet>
+      <fields>
+        <field name="MFR">Lite-ON</field>
+        <field name="MPN">LTW-420D7</field>
+        <field name="SPR">Mouser</field>
+        <field name="SPN">859-LTW-420D7</field>
+      </fields>
+      <libsource lib="pink0-rescue" part="LED-RESCUE-pink0"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A67691A</tstamp>
+    </comp>
+    <comp ref="U1">
+      <value>MP1469</value>
+      <footprint>raffilibkicad:SOT-23-6</footprint>
+      <libsource lib="raffilibkicad" part="MP1469"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>5A69F3A6</tstamp>
+    </comp>
+  </components>
+  <libparts>
+    <libpart lib="pink0-cache" part="BC850">
+      <aliases>
+        <alias>BC849</alias>
+      </aliases>
+      <footprints>
+        <fp>SOT-23*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">Q</field>
+        <field name="Value">BC850</field>
+        <field name="Footprint">TO_SOT_Packages_SMD:SOT-23</field>
+      </fields>
+      <pins>
+        <pin num="1" name="B" type="input"/>
+        <pin num="2" name="E" type="passive"/>
+        <pin num="3" name="C" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="C">
+      <description>Unpolarized capacitor</description>
+      <footprints>
+        <fp>C?</fp>
+        <fp>C_????_*</fp>
+        <fp>C_????</fp>
+        <fp>SMD*_c</fp>
+        <fp>Capacitor*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">C</field>
+        <field name="Value">C</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="CONN_02X05">
+      <description>Connector, double row, 02x05</description>
+      <footprints>
+        <fp>Pin_Header_Straight_2X05</fp>
+        <fp>Pin_Header_Angled_2X05</fp>
+        <fp>Socket_Strip_Straight_2X05</fp>
+        <fp>Socket_Strip_Angled_2X05</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">P</field>
+        <field name="Value">CONN_02X05</field>
+      </fields>
+      <pins>
+        <pin num="1" name="P1" type="passive"/>
+        <pin num="2" name="P2" type="passive"/>
+        <pin num="3" name="P3" type="passive"/>
+        <pin num="4" name="P4" type="passive"/>
+        <pin num="5" name="P5" type="passive"/>
+        <pin num="6" name="P6" type="passive"/>
+        <pin num="7" name="P7" type="passive"/>
+        <pin num="8" name="P8" type="passive"/>
+        <pin num="9" name="P9" type="passive"/>
+        <pin num="10" name="P10" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="CP">
+      <description>Polarised capacitor</description>
+      <footprints>
+        <fp>CP*</fp>
+        <fp>C_Axial*</fp>
+        <fp>C_Radial*</fp>
+        <fp>TantalC*</fp>
+        <fp>C*elec</fp>
+        <fp>c_elec*</fp>
+        <fp>SMD*_Pol</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">C</field>
+        <field name="Value">CP</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="pink0-cache" part="GS3">
+      <footprints>
+        <fp>GS*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">J</field>
+        <field name="Value">GS3</field>
+        <field name="Footprint">Connectors:GS3</field>
+      </fields>
+      <pins>
+        <pin num="1" name="G1" type="passive"/>
+        <pin num="2" name="G2" type="passive"/>
+        <pin num="3" name="G3" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="INDUCTOR">
+      <footprints>
+        <fp>Choke_*</fp>
+        <fp>*Coil*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">L</field>
+        <field name="Value">INDUCTOR</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+        <pin num="2" name="2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="JACK_QINGPU">
+      <fields>
+        <field name="Reference">J</field>
+        <field name="Value">JACK_QINGPU</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+        <pin num="3" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="pink0-rescue" part="LED-RESCUE-pink0">
+      <footprints>
+        <fp>LED-3MM</fp>
+        <fp>LED-5MM</fp>
+        <fp>LED-10MM</fp>
+        <fp>LED-0603</fp>
+        <fp>LED-0805</fp>
+        <fp>LED-1206</fp>
+        <fp>LEDV</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">D</field>
+        <field name="Value">LED-RESCUE-pink0</field>
+      </fields>
+      <pins>
+        <pin num="1" name="K" type="passive"/>
+        <pin num="2" name="A" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="MCP6004">
+      <description>Quad Op amp.</description>
+      <docs>op_amps/lm324.pdf</docs>
+      <footprints>
+        <fp>SOIC*</fp>
+        <fp>DIP*</fp>
+        <fp>TSSOP*</fp>
+        <fp>SSOP*</fp>
+        <fp>MSOP*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">MCP6004</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="output"/>
+        <pin num="2" name="-" type="input"/>
+        <pin num="3" name="+" type="input"/>
+        <pin num="4" name="V+" type="power_in"/>
+        <pin num="5" name="+" type="input"/>
+        <pin num="6" name="-" type="input"/>
+        <pin num="7" name="~" type="output"/>
+        <pin num="8" name="~" type="output"/>
+        <pin num="9" name="-" type="input"/>
+        <pin num="10" name="+" type="input"/>
+        <pin num="11" name="V-" type="power_in"/>
+        <pin num="12" name="+" type="input"/>
+        <pin num="13" name="-" type="input"/>
+        <pin num="14" name="~" type="output"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="MP1469">
+      <description>MP1469 step down converter </description>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">MP1469</field>
+      </fields>
+      <pins>
+        <pin num="1" name="IN" type="input"/>
+        <pin num="2" name="GND" type="input"/>
+        <pin num="3" name="SW" type="input"/>
+        <pin num="4" name="BST" type="input"/>
+        <pin num="5" name="EN" type="input"/>
+        <pin num="6" name="FB" type="input"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="PI_ZERO">
+      <description>Pi Zero, double row, 02x20, pin header</description>
+      <footprints>
+        <fp>Pin_Header_Straight_2X*</fp>
+        <fp>Pin_Header_Angled_2X*</fp>
+        <fp>Socket_Strip_Straight_2X*</fp>
+        <fp>Socket_Strip_Angled_2X*</fp>
+        <fp>IDC_Header_Straight_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">J</field>
+        <field name="Value">PI_ZERO</field>
+      </fields>
+      <pins>
+        <pin num="1" name="P1" type="passive"/>
+        <pin num="2" name="P2" type="passive"/>
+        <pin num="3" name="P3" type="passive"/>
+        <pin num="4" name="P4" type="passive"/>
+        <pin num="5" name="P5" type="passive"/>
+        <pin num="6" name="P6" type="passive"/>
+        <pin num="7" name="P7" type="passive"/>
+        <pin num="8" name="P8" type="passive"/>
+        <pin num="9" name="P9" type="passive"/>
+        <pin num="10" name="P10" type="passive"/>
+        <pin num="11" name="P11" type="passive"/>
+        <pin num="12" name="P12" type="passive"/>
+        <pin num="13" name="P13" type="passive"/>
+        <pin num="14" name="P14" type="passive"/>
+        <pin num="15" name="P15" type="passive"/>
+        <pin num="16" name="P16" type="passive"/>
+        <pin num="17" name="P17" type="passive"/>
+        <pin num="18" name="P18" type="passive"/>
+        <pin num="19" name="P19" type="passive"/>
+        <pin num="20" name="P20" type="passive"/>
+        <pin num="21" name="P21" type="passive"/>
+        <pin num="22" name="P22" type="passive"/>
+        <pin num="23" name="P23" type="passive"/>
+        <pin num="24" name="P24" type="passive"/>
+        <pin num="25" name="P25" type="passive"/>
+        <pin num="26" name="P26" type="passive"/>
+        <pin num="27" name="P27" type="passive"/>
+        <pin num="28" name="P28" type="passive"/>
+        <pin num="29" name="P29" type="passive"/>
+        <pin num="30" name="P30" type="passive"/>
+        <pin num="31" name="P31" type="passive"/>
+        <pin num="32" name="P32" type="passive"/>
+        <pin num="33" name="P33" type="passive"/>
+        <pin num="34" name="P34" type="passive"/>
+        <pin num="35" name="P35" type="passive"/>
+        <pin num="36" name="P36" type="passive"/>
+        <pin num="37" name="P37" type="passive"/>
+        <pin num="38" name="P38" type="passive"/>
+        <pin num="39" name="P39" type="passive"/>
+        <pin num="40" name="P40" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="raffilibkicad" part="R">
+      <description>Resistor</description>
+      <footprints>
+        <fp>R_*</fp>
+        <fp>Resistor_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">R</field>
+        <field name="Value">R</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+  </libparts>
+  <libraries>
+    <library logical="pink0-rescue">
+      <uri>/Users/raffi_old/Documents/Projects_Electronix/seismic_industries/008b_KICAD/060_pink0/pink0-rescue.lib</uri>
+    </library>
+    <library logical="raffilibkicad">
+      <uri>/Users/raffi_old/Documents/Projects_Electronix/seismic_industries/008b_KICAD/001_libraries/raffilibkicad/raffilibkicad.lib</uri>
+    </library>
+    <library logical="pink0-cache">
+      <uri>/Users/raffi_old/Documents/Projects_Electronix/seismic_industries/008b_KICAD/060_pink0/pink0-cache.lib</uri>
+    </library>
+  </libraries>
+  <nets>
+    <net code="1" name="Net-(L1-Pad2)">
+      <node ref="L1" pin="2"/>
+      <node ref="P1" pin="9"/>
+      <node ref="P1" pin="10"/>
+    </net>
+    <net code="2" name="CLK_OUT">
+      <node ref="R11" pin="1"/>
+      <node ref="U2" pin="5"/>
+      <node ref="J8" pin="1"/>
+      <node ref="Q1" pin="3"/>
+    </net>
+    <net code="3" name="RST_OUT">
+      <node ref="J7" pin="1"/>
+      <node ref="U2" pin="3"/>
+      <node ref="Q2" pin="3"/>
+      <node ref="R12" pin="1"/>
+    </net>
+    <net code="4" name="GPIO20">
+      <node ref="J1" pin="38"/>
+      <node ref="J5" pin="3"/>
+      <node ref="J6" pin="1"/>
+    </net>
+    <net code="5" name="GPIO14">
+      <node ref="J1" pin="8"/>
+      <node ref="J5" pin="1"/>
+      <node ref="J6" pin="3"/>
+    </net>
+    <net code="6" name="Net-(C5-Pad1)">
+      <node ref="R10" pin="2"/>
+      <node ref="R7" pin="1"/>
+      <node ref="C5" pin="1"/>
+    </net>
+    <net code="7" name="Net-(Q1-Pad1)">
+      <node ref="Q1" pin="1"/>
+      <node ref="R10" pin="1"/>
+    </net>
+    <net code="8" name="Net-(Q2-Pad1)">
+      <node ref="Q2" pin="1"/>
+      <node ref="R9" pin="1"/>
+    </net>
+    <net code="9" name="Net-(C4-Pad1)">
+      <node ref="R8" pin="1"/>
+      <node ref="R9" pin="2"/>
+      <node ref="C4" pin="1"/>
+    </net>
+    <net code="10" name="GPIO9">
+      <node ref="J1" pin="21"/>
+      <node ref="P2" pin="9"/>
+    </net>
+    <net code="11" name="GPIO17">
+      <node ref="J1" pin="11"/>
+      <node ref="P2" pin="7"/>
+    </net>
+    <net code="12" name="GPIO10">
+      <node ref="J1" pin="19"/>
+      <node ref="P2" pin="5"/>
+    </net>
+    <net code="13" name="GPIO25">
+      <node ref="J1" pin="22"/>
+      <node ref="P2" pin="3"/>
+    </net>
+    <net code="14" name="GPIO8">
+      <node ref="J1" pin="24"/>
+      <node ref="P2" pin="1"/>
+    </net>
+    <net code="15" name="Earth">
+      <node ref="RST_OUT1" pin="1"/>
+      <node ref="CLK_OUT1" pin="1"/>
+      <node ref="C4" pin="2"/>
+      <node ref="R15" pin="2"/>
+      <node ref="R13" pin="2"/>
+      <node ref="U2" pin="11"/>
+      <node ref="C5" pin="2"/>
+      <node ref="Q4" pin="2"/>
+      <node ref="Q3" pin="2"/>
+      <node ref="Q2" pin="2"/>
+      <node ref="Q1" pin="2"/>
+      <node ref="J1" pin="25"/>
+      <node ref="J1" pin="34"/>
+      <node ref="J1" pin="14"/>
+      <node ref="J1" pin="30"/>
+      <node ref="J1" pin="20"/>
+      <node ref="J1" pin="9"/>
+      <node ref="J1" pin="6"/>
+      <node ref="C1" pin="2"/>
+      <node ref="P1" pin="8"/>
+      <node ref="P1" pin="7"/>
+      <node ref="P1" pin="6"/>
+      <node ref="P1" pin="5"/>
+      <node ref="P1" pin="4"/>
+      <node ref="P1" pin="3"/>
+      <node ref="J1" pin="39"/>
+      <node ref="R3" pin="1"/>
+      <node ref="C6" pin="2"/>
+      <node ref="U1" pin="2"/>
+      <node ref="D1" pin="1"/>
+      <node ref="D2" pin="1"/>
+      <node ref="C7" pin="1"/>
+    </net>
+    <net code="16" name="Net-(D2-Pad2)">
+      <node ref="D2" pin="2"/>
+      <node ref="R18" pin="1"/>
+    </net>
+    <net code="17" name="Net-(D1-Pad2)">
+      <node ref="R17" pin="1"/>
+      <node ref="D1" pin="2"/>
+    </net>
+    <net code="18" name="+5V">
+      <node ref="C7" pin="2"/>
+      <node ref="U2" pin="4"/>
+      <node ref="R11" pin="2"/>
+      <node ref="R12" pin="2"/>
+      <node ref="R14" pin="1"/>
+      <node ref="R2" pin="2"/>
+      <node ref="C6" pin="1"/>
+      <node ref="L3" pin="1"/>
+      <node ref="R24" pin="2"/>
+      <node ref="R22" pin="1"/>
+      <node ref="R4" pin="1"/>
+      <node ref="J1" pin="4"/>
+      <node ref="J1" pin="2"/>
+    </net>
+    <net code="19" name="PWMA_R">
+      <node ref="J1" pin="33"/>
+      <node ref="R8" pin="2"/>
+    </net>
+    <net code="20" name="PWMA_L">
+      <node ref="J1" pin="12"/>
+      <node ref="R7" pin="2"/>
+    </net>
+    <net code="21" name="Net-(R16-Pad2)">
+      <node ref="R16" pin="2"/>
+      <node ref="U1" pin="5"/>
+    </net>
+    <net code="22" name="Net-(J8-Pad3)">
+      <node ref="R18" pin="2"/>
+      <node ref="U2" pin="7"/>
+      <node ref="J8" pin="3"/>
+    </net>
+    <net code="23" name="Net-(J7-Pad3)">
+      <node ref="J7" pin="3"/>
+      <node ref="U2" pin="1"/>
+      <node ref="R17" pin="2"/>
+    </net>
+    <net code="24" name="Net-(R14-Pad2)">
+      <node ref="U2" pin="6"/>
+      <node ref="R15" pin="1"/>
+      <node ref="R14" pin="2"/>
+    </net>
+    <net code="25" name="Net-(R13-Pad1)">
+      <node ref="U2" pin="2"/>
+      <node ref="R13" pin="1"/>
+      <node ref="R4" pin="2"/>
+    </net>
+    <net code="26" name="Net-(R1-Pad1)">
+      <node ref="R1" pin="1"/>
+      <node ref="U1" pin="6"/>
+    </net>
+    <net code="27" name="Net-(C3-Pad1)">
+      <node ref="L3" pin="2"/>
+      <node ref="C3" pin="1"/>
+      <node ref="U1" pin="3"/>
+    </net>
+    <net code="28" name="Net-(C3-Pad2)">
+      <node ref="U1" pin="4"/>
+      <node ref="C3" pin="2"/>
+    </net>
+    <net code="29" name="Net-(R1-Pad2)">
+      <node ref="R2" pin="1"/>
+      <node ref="R3" pin="2"/>
+      <node ref="R1" pin="2"/>
+    </net>
+    <net code="30" name="+12VA">
+      <node ref="U1" pin="1"/>
+      <node ref="L1" pin="1"/>
+      <node ref="C1" pin="1"/>
+      <node ref="R16" pin="1"/>
+    </net>
+    <net code="31" name="Net-(Q4-Pad3)">
+      <node ref="Q4" pin="3"/>
+      <node ref="R24" pin="1"/>
+      <node ref="R21" pin="2"/>
+    </net>
+    <net code="32" name="Net-(MIDI_OUT1-Pad1)">
+      <node ref="Q3" pin="3"/>
+      <node ref="MIDI_OUT1" pin="1"/>
+    </net>
+    <net code="33" name="Net-(MIDI_OUT1-Pad3)">
+      <node ref="R22" pin="2"/>
+      <node ref="MIDI_OUT1" pin="3"/>
+    </net>
+    <net code="34" name="Net-(Q3-Pad1)">
+      <node ref="Q3" pin="1"/>
+      <node ref="R21" pin="1"/>
+    </net>
+    <net code="35" name="Net-(J6-Pad2)">
+      <node ref="J6" pin="2"/>
+      <node ref="R23" pin="2"/>
+    </net>
+    <net code="36" name="+3V3">
+      <node ref="R5" pin="1"/>
+      <node ref="R6" pin="1"/>
+      <node ref="J1" pin="1"/>
+    </net>
+    <net code="37" name="Net-(Q4-Pad1)">
+      <node ref="Q4" pin="1"/>
+      <node ref="R23" pin="1"/>
+    </net>
+    <net code="38" name="Net-(MIDI_OUT1-Pad2)">
+      <node ref="MIDI_OUT1" pin="2"/>
+    </net>
+    <net code="39" name="Net-(J7-Pad2)">
+      <node ref="RST_OUT1" pin="3"/>
+      <node ref="J7" pin="2"/>
+    </net>
+    <net code="40" name="Net-(RST_OUT1-Pad2)">
+      <node ref="RST_OUT1" pin="2"/>
+    </net>
+    <net code="41" name="Net-(CLK_OUT1-Pad3)">
+      <node ref="J8" pin="2"/>
+      <node ref="CLK_OUT1" pin="3"/>
+    </net>
+    <net code="42" name="Net-(CLK_OUT1-Pad2)">
+      <node ref="CLK_OUT1" pin="2"/>
+    </net>
+    <net code="43" name="GPIO24">
+      <node ref="P2" pin="10"/>
+      <node ref="J1" pin="18"/>
+    </net>
+    <net code="44" name="GPIO11">
+      <node ref="P2" pin="8"/>
+      <node ref="J1" pin="23"/>
+    </net>
+    <net code="45" name="GPIO23">
+      <node ref="J1" pin="16"/>
+      <node ref="P2" pin="6"/>
+    </net>
+    <net code="46" name="GPIO4">
+      <node ref="J1" pin="7"/>
+      <node ref="P2" pin="4"/>
+    </net>
+    <net code="47" name="GPIO27">
+      <node ref="P2" pin="2"/>
+      <node ref="J1" pin="13"/>
+    </net>
+    <net code="48" name="Net-(J1-Pad32)">
+      <node ref="J1" pin="32"/>
+    </net>
+    <net code="49" name="Net-(J1-Pad40)">
+      <node ref="J1" pin="40"/>
+    </net>
+    <net code="50" name="Net-(P1-Pad2)">
+      <node ref="P1" pin="2"/>
+    </net>
+    <net code="51" name="Net-(P1-Pad1)">
+      <node ref="P1" pin="1"/>
+    </net>
+    <net code="52" name="Net-(J1-Pad28)">
+      <node ref="J1" pin="28"/>
+    </net>
+    <net code="53" name="Net-(J1-Pad37)">
+      <node ref="J1" pin="37"/>
+    </net>
+    <net code="54" name="Net-(J1-Pad27)">
+      <node ref="J1" pin="27"/>
+    </net>
+    <net code="55" name="Net-(J1-Pad17)">
+      <node ref="J1" pin="17"/>
+    </net>
+    <net code="56" name="GPIO6">
+      <node ref="R6" pin="2"/>
+      <node ref="P4" pin="10"/>
+      <node ref="J1" pin="31"/>
+    </net>
+    <net code="57" name="GPIO19">
+      <node ref="J1" pin="35"/>
+      <node ref="P4" pin="9"/>
+    </net>
+    <net code="58" name="GPIO16">
+      <node ref="P4" pin="8"/>
+      <node ref="J1" pin="36"/>
+    </net>
+    <net code="59" name="GPIO5">
+      <node ref="P4" pin="7"/>
+      <node ref="J1" pin="29"/>
+      <node ref="R5" pin="2"/>
+    </net>
+    <net code="60" name="GPIO2">
+      <node ref="J1" pin="3"/>
+      <node ref="P4" pin="6"/>
+    </net>
+    <net code="61" name="GPIO7">
+      <node ref="P4" pin="5"/>
+      <node ref="J1" pin="26"/>
+    </net>
+    <net code="62" name="GPIO3">
+      <node ref="J1" pin="5"/>
+      <node ref="P4" pin="4"/>
+    </net>
+    <net code="63" name="GPIO15">
+      <node ref="J1" pin="10"/>
+      <node ref="P4" pin="3"/>
+    </net>
+    <net code="64" name="T_LED">
+      <node ref="P4" pin="2"/>
+      <node ref="J5" pin="2"/>
+    </net>
+    <net code="65" name="GPIO22">
+      <node ref="P4" pin="1"/>
+      <node ref="J1" pin="15"/>
+    </net>
+  </nets>
+</export>

@@ -1,0 +1,13 @@
+Qty,partname,description,lib
+0,"BC850","","pink0-cache"
+0,"C","Unpolarized capacitor","raffilibkicad"
+0,"CONN_02X05","Connector, double row, 02x05","raffilibkicad"
+0,"CP","Polarised capacitor","raffilibkicad"
+0,"GS3","","pink0-cache"
+0,"INDUCTOR","","raffilibkicad"
+0,"JACK_QINGPU","","raffilibkicad"
+0,"LED-RESCUE-pink0","","pink0-rescue"
+0,"MCP6004","Quad Op amp.","raffilibkicad"
+0,"MP1469","MP1469 step down converter ","raffilibkicad"
+0,"PI_ZERO","Pi Zero, double row, 02x20, pin header","raffilibkicad"
+0,"R","Resistor","raffilibkicad"

@@ -1,0 +1,18 @@
+Refs,Value,Footprint,QTY,MFR,MPN,SPR,SPN
+RUN1;TEMPO1;LENGTH1;PPQN1,LED,LEDs:LED_0805,4,,,,
+AFF1;AFF2;AFF3;AFF4,7SEGMENTS,raffilibkicad:ACSA02_KCSA02_7segment,4,Kingbright,ACSA02-41YWA-F01,Mouser,604-ACSA02-41YWA
+SW1,SW_PUSH_SMALL_H,raffilibkicad:APEM_tactile_SMD_switch_6mm,1,APEM,ADTSM66NV,Mouser,642-ADTSM66NV
+C1;C2;C3,CP,raffilibkicad:CP_Elec_5x5.3,3,,,,
+C4;C5,C,raffilibkicad:C_0805,2,,,,
+SW2,Rotary_Encoder_Switch,raffilibkicad:ENCODER_PEC11_SMD,1,Bourns,PEC11S-929K-S0015,Mouser,652-PEC11S9215KH0015
+L1;L2,INDUCTOR,raffilibkicad:Inductor_PSU_NLCV32T,2,,,,
+P2;P3,CONN_02X05,raffilibkicad:PINHEAD_10_pin_jtag_connector,2,,,,
+J5;J6;J7;J8,CONN_02X03,raffilibkicad:PINHEAD_6_pin_minitek_2row_1_27mm,4,,,,
+J1,PI_ZERO,raffilibkicad:PI_ZERO,1,,,,
+P1,CONN_02X05,raffilibkicad:Pin_Header_Angled_2x05_Pitch2.54mm_with_space_for_con,1,,,,
+R21,10k,raffilibkicad:R_0805,1,,,,
+R22,220,raffilibkicad:R_0805,1,,,,
+R1;R2;R3;R4;R10;R7;R9;R8;R12;R11;R5;R6;R13;R14;R15;R16;R17;R18;R19;R20,R,raffilibkicad:R_0805,20,,,,
+U1,LM1117-5.0,raffilibkicad:SOT-223,1,Texas Instruments,LM1117MPX-5.0/NOPB,Mouser,926-LM1117MPX5.0NOPB
+Q1;Q2;Q3,BC849,raffilibkicad:SOT-23,3,,,,
+J2;J3;J4,JACK_QINGPU,raffilibkicad:jack_qingpu,3,,,,
