@@ -136,6 +136,22 @@ cd ..
 echo ""
 echo ""
 echo ""
+echo -e "[ \033[1m\033[96mpink\033[m ] Install wlan mode switching script into crontab @ reboot - temporary -"
+echo ""
+if [ $platform == "linux-rpi" ];
+  then
+    sudo mkdir /opt/si
+    sudo mkdir /opt/si/modeswitch
+    sudo cp support/modeswitch/wlan-mode.sh /opt/si/modeswitch/.
+    touch tmpfile
+    echo "@reboot /opt/si/modeswitch/wlan-mode.sh &" >> tmpfile
+    sudo crontab tmpfile
+    rm tmpfile
+fi
+
+echo ""
+echo ""
+echo ""
 echo -e "[ \033[1m\033[96mpink\033[m ] Update device configuration -------------------------------------------"
 if [ $platform == "linux-rpi" ];
   then
