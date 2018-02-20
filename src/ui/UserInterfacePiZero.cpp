@@ -21,7 +21,7 @@
 namespace
 {
 const unsigned kPinLedLength{9};   // BCM 3
-const unsigned kPinLedTempo{28};   // BCM 20(wPI20) instead of 14 (wPI15) - raffi-luki
+const unsigned kPinLedTempo{28};   // BCM 20(wPI28) instead of 14 (wPI15) - raffi-luki
 const unsigned kPinLedPPQN{8};     // BCM 2
 const unsigned kPinLedRunning{11}; // BCM 7
 
