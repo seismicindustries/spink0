@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/si/modeswitch
-ExecStart=/opt/sii/modeswitch/wlan-mode.sh
+ExecStart=/opt/si/modeswitch/wlan-mode.sh
 
 [Install]
 WantedBy=multi-user.target

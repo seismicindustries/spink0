@@ -2,8 +2,8 @@
 
 # Switch spink WLAN configuration (AP Mode / Client Mode)
 # inital script by lucky lucas :) thanks
-# GPIO 21 is from the button --> press starts AP Mode
-# GPIO 22 is from the encoder ---> press starts Client mode
+# GPIO 22 is from the button --> press starts AP Mode
+# GPIO 21 is from the encoder ---> press starts Client mode
 
 # Global variables
 wlan_mode="none"
@@ -66,18 +66,18 @@ client_mode(){
 setup (){
   echo "Setup"
   counter=1
-#  gpio mode 22 in ;
+#  gpio mode 21 in ;
 }
 
 setup
 
-# gpio 21 / AP Mode
-# gpio 22/ Client Mode
+# gpio 22 / AP Mode
+# gpio 21 / Client Mode
 while :
 do
         # read the run/stop button state
-        ap_mode_btn=$(gpio read 21)
-        client_mode_btn=$(gpio read 22)
+        ap_mode_btn=$(gpio read 22)
+        client_mode_btn=$(gpio read 21)
 
         if [ $ap_mode_btn -eq 0 ]; then
           echo $counter
