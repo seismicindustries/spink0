@@ -3,7 +3,11 @@
         ##      ##    or <http://opensource.org/licenses/MIT>
         ##      ##
 ##########      ############################################################# shaduzlabs.com #######
-
+##
+## seismic industries	-	changed raspap source
+## 				added mode switching scripts 
+## 				change mode switching scripts to from cron to systemd
+##
 platform='unknown'
 unamestr=`uname`
 if [[ "$unamestr" == 'Linux' ]]; then
@@ -39,7 +43,7 @@ echo -e "                             ) )"
 echo -e "                            ( (  ))                "
 echo -e "                             ) )("
 echo -e "                              ))       ))),,        "
-echo -e "                              (       /  ///       "
+echo -e "       RRR                    (       /  ///       "
 echo -e "                                     _ _  /"
 echo -e "                             _U___  <     )  ()"
 echo -e "                            / /      \_- |. //"
@@ -123,7 +127,7 @@ if [ $1 == "no-ui" ]
     cmake -DCMAKE_BUILD_TYPE=Release -DUSE_PI_ZERO=OFF -DUSE_WEBSOCKET=ON -DJUST_INSTALL_CEREAL=ON ..
   else
     echo -e "[ \033[1m\033[96mpink\033[m ] Raspberry Pi Zero shield support is enabled ---------------------------"
-    cmake -DCMAKE_BUILD_TYPE=Release -DUSE_PI_ZERO=ON -DUSE_WEBSOCKET=ON -DJUST_INSTALL_CEREAL=ON ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DUSE_PI_ZERO=ON -DUSE_WEBSOCKET=OFF -DJUST_INSTALL_CEREAL=ON ..
 fi
 make
 if [ $platform == "linux-rpi" ];
@@ -136,17 +140,16 @@ cd ..
 echo ""
 echo ""
 echo ""
-echo -e "[ \033[1m\033[96mpink\033[m ] Install wlan mode switching script into crontab @ reboot - temporary -"
+echo -e "[ \033[1m\033[96mpink\033[m ] Install wlan mode switching script into systemctl's realms -------------"
 echo ""
 if [ $platform == "linux-rpi" ];
   then
     sudo mkdir /opt/si
     sudo mkdir /opt/si/modeswitch
     sudo cp support/modeswitch/wlan-mode.sh /opt/si/modeswitch/.
-    touch tmpfile
-    echo "@reboot /opt/si/modeswitch/wlan-mode.sh &" >> tmpfile
-    sudo crontab tmpfile
-    rm tmpfile
+    sudo cp support/modeswitch/wlan-mode.service /etc/systemd/system/.
+    sudo systemctl daemon-reload
+    sudo systemctl enable wlan-mode.service
 fi
 
 echo ""

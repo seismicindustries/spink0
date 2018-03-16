@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Switch spink WLAN configuration (AP Mode / Client Mode)
-
-# GPIO 22 is from the button --> press starts AP Mode
-# GPIO 21 is from the encoder ---> press starts Client mode
+# inital script by lucky lucas :) thanks
+# GPIO 21 is from the button --> press starts AP Mode
+# GPIO 22 is from the encoder ---> press starts Client mode
 
 # Global variables
 wlan_mode="none"
@@ -27,7 +27,7 @@ ap_mode(){
 #  iwlist wlan0 scan
 #  sudo iw dev wlan0 scan ap-force
   wla_cli scan_results
-  ionice -c 1 -n 0 nice -n 20 /etc/init.d/pink start
+  /etc/init.d/pink start
   amixer set PCM 100%
 	
 }
@@ -45,7 +45,7 @@ client_mode(){
 
   sudo wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
   sleep 5
-  ionice -c 1 -n 0 nice -n -20 /etc/init.d/pink start
+  /etc/init.d/pink start
   sleep 1
   sudo dhclient -4 -r wlan0
   sleep 2
@@ -66,18 +66,18 @@ client_mode(){
 setup (){
   echo "Setup"
   counter=1
-#  gpio mode 21 in ;
+#  gpio mode 22 in ;
 }
 
 setup
 
-# gpio 22 / AP Mode
-# gpio 21 / Client Mode
+# gpio 21 / AP Mode
+# gpio 22/ Client Mode
 while :
 do
         # read the run/stop button state
-        ap_mode_btn=$(gpio read 22)
-        client_mode_btn=$(gpio read 21)
+        ap_mode_btn=$(gpio read 21)
+        client_mode_btn=$(gpio read 22)
 
         if [ $ap_mode_btn -eq 0 ]; then
           echo $counter
