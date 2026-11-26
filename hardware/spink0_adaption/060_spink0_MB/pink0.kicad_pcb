@@ -3,9 +3,9 @@
   (general
     (links 120)
     (no_connects 0)
-    (area -68.870001 -5.55 72.900001 128.775001)
+    (area -32.175001 -0.075001 62.075001 128.775001)
     (thickness 1.6)
-    (drawings 55)
+    (drawings 57)
     (tracks 693)
     (zones 0)
     (modules 51)
@@ -2092,6 +2092,8 @@
       (net 53 "Net-(J2-Pad1)"))
   )
 
+  (gr_circle (center 1.2 80.4) (end 1.5 80.9) (layer B.Mask) (width 1) (tstamp 5A913E70))
+  (gr_circle (center 1.2 80.4) (end 1.5 80.9) (layer F.Mask) (width 1))
   (gr_text CC-BY-NC-SA (at 11 35.2 90) (layer B.SilkS)
     (effects (font (size 1.5 1.5) (thickness 0.3)) (justify mirror))
   )

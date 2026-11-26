@@ -1,3 +1,4 @@
+#!/bin/bash
         ##########    Copyright (C) 2016 Vincenzo Pacella
         ##      ##    Distributed under MIT license, see file LICENSE
         ##      ##    or <http://opensource.org/licenses/MIT>
@@ -8,6 +9,7 @@
 ## 				added mode switching scripts 
 ## 				change mode switching scripts to from cron to systemd
 ##
+
 platform='unknown'
 unamestr=`uname`
 if [[ "$unamestr" == 'Linux' ]]; then
@@ -76,7 +78,7 @@ if [ $platform == "osx" ];
     brew install cmake
   else
     sudo apt-get update
-    sudo apt-get install -y --force-yes cmake wiringpi
+    sudo apt-get install -y --force-yes libasound-dev librtaudio-dev cmake wiringpi
 fi
 
 echo ""
@@ -113,7 +115,6 @@ make
 sudo make install
 sudo ldconfig
 cd ../../../
-
 
 echo ""
 echo ""
@@ -160,6 +161,8 @@ if [ $platform == "linux-rpi" ];
   then
     sudo cp --backup=numbered support/hostapd.conf /etc/hostapd/.
     sudo cp -r support/html/* /var/www/html/.
+    amixer set PCM 100%
+    sudo alsactl store
 fi
 
 echo ""

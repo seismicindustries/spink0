@@ -8,9 +8,14 @@
 #pragma once
 
 #include "Engine.h"
+#include <ableton/platforms/Config.hpp>
 #include <ableton/link/HostTimeFilter.hpp>
-#include <portaudio.h>
 
+#ifdef AUDIO_USE_RTAUDIO
+#include <RtAudio.h>
+#else
+#include <portaudio.h>
+#endif
 // -------------------------------------------------------------------------------------------------
 
 namespace sl
@@ -31,27 +36,39 @@ public:
   }
 
 private:
-  static int audioCallback(const void* inputBuffer,
+#ifdef AUDIO_USE_RTAUDIO
+  static int audioCallbackRTA(void* outputBuffer,
+    void* inputBuffer,
+    unsigned int nBufferFrames,
+    double streamTime,
+    RtAudioStreamStatus status,
+    void* userData);
+#else
+  static int audioCallbackPA(const void* inputBuffer,
     void* outputBuffer,
     unsigned long inNumFrames,
     const PaStreamCallbackTimeInfo* timeInfo,
     PaStreamCallbackFlags statusFlags,
     void* userData);
+#endif
 
   void initialize();
   void uninitialize();
   void start();
   void stop();
 
-#ifdef __APPLE__
-  ableton::link::HostTimeFilter<ableton::platforms::darwin::Clock> m_hostTimeFilter;
-#else
-  ableton::link::HostTimeFilter<ableton::platforms::stl::Clock> m_hostTimeFilter;
-#endif
+  ableton::link::HostTimeFilter<ableton::link::platform::Clock> m_hostTimeFilter;
 
   Engine m_engine;
   double m_sampleTime;
+
+#ifdef AUDIO_USE_RTAUDIO
+  RtAudio m_audioDevice;
+  unsigned m_audioBufferSize;
+  RtAudio::StreamParameters m_audioStreamParameters;
+#else
   PaStream* m_stream;
+#endif
 };
 
 // -------------------------------------------------------------------------------------------------

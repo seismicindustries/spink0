@@ -61,7 +61,7 @@ bool Engine::isPlaying() const
 
 double Engine::beatTime() const
 {
-  const auto timeline = m_link.captureAppTimeline();
+  const auto timeline = m_link.captureAppSessionState();
   return timeline.beatAtTime(m_link.clock().micros(), m_engineDataShared.quantum);
 }
 
@@ -76,8 +76,8 @@ std::size_t Engine::bufferSize() const
 
 void Engine::setBufferSize(std::size_t size)
 {
-  m_bufferClock = std::vector<double>(size, 0.);
-  m_bufferReset = std::vector<double>(size, 0.);
+  m_bufferClock = std::vector<double>(size, 1.);
+  m_bufferReset = std::vector<double>(size, 1.);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ void Engine::setSampleRate(double sampleRate)
 
 double Engine::tempo() const
 {
-  return m_link.captureAppTimeline().tempo();
+  return m_link.captureAppSessionState().tempo();
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -172,7 +172,7 @@ void Engine::process(const std::chrono::microseconds hostTime, const std::size_t
 {
   const auto engineData = pullEngineData();
 
-  auto timeline = m_link.captureAudioTimeline();
+  auto timeline = m_link.captureAppSessionState();
 
   // Clear the buffer
   std::fill(m_bufferClock.begin(), m_bufferClock.end(), 0.);
@@ -192,7 +192,7 @@ void Engine::process(const std::chrono::microseconds hostTime, const std::size_t
   }
 
   // Timeline modifications are complete, commit the results
-  m_link.commitAudioTimeline(timeline);
+  m_link.commitAudioSessionState(timeline);
 
   if (engineData.isPlaying)
   {
@@ -227,7 +227,7 @@ Engine::Data Engine::pullEngineData()
 
 // -------------------------------------------------------------------------------------------------
 
-void Engine::renderMetronomeIntoBuffer(const Link::Timeline timeline,
+void Engine::renderMetronomeIntoBuffer(const Link::SessionState timeline,
   const double quantum,
   const std::chrono::microseconds beginHostTime,
   const std::size_t numSamples)
@@ -267,7 +267,7 @@ void Engine::renderMetronomeIntoBuffer(const Link::Timeline timeline,
       const auto secondsAfterReset = duration_cast<duration<double>>(hostTime - m_timeAtLastReset);
 
       auto phase = timeline.phaseAtTime(hostTime, quantum);
-      if (phase < m_phase)
+      if (phase < m_phase || phase == 0)
       {
         // reset!
         m_timeAtLastReset = hostTime;
