@@ -44,6 +44,7 @@ Engine::Engine(Link& link)
   , m_underruns(0)
   , m_beatJumps(0)
   , m_lastBeatJumpUs(0)
+  , m_startGeneration(0)
 {
 }
 
@@ -214,6 +215,11 @@ void Engine::process(const std::chrono::microseconds hostTime, const std::size_t
   // Timeline modifications are complete, commit the results
   m_link.commitAudioSessionState(timeline);
 
+  if (engineData.resetBeatTime)
+  {
+    m_startGeneration.fetch_add(1);
+  }
+
   // Timeline continuity check: the beat at the start of this buffer should be where the previous
   // buffer ended. Deliberate changes (our own reset/tempo request, a new quantum) are skipped.
   {
@@ -258,6 +264,13 @@ void Engine::noteUnderrun()
 Engine::Diagnostics Engine::diagnostics() const
 {
   return {m_underruns.load(), m_beatJumps.load(), m_lastBeatJumpUs.load()};
+}
+
+// -------------------------------------------------------------------------------------------------
+
+std::uint32_t Engine::startGeneration() const
+{
+  return m_startGeneration.load();
 }
 
 // -------------------------------------------------------------------------------------------------

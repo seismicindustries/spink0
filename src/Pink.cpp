@@ -79,7 +79,7 @@ namespace pi
 
 // -------------------------------------------------------------------------------------------------
 
-Pink::Pink(double tempo_, double length_, double clockMultiplier_) : m_link(tempo_), m_audio(m_link)
+Pink::Pink(double tempo_, double length_, double clockMultiplier_) : m_link(tempo_), m_audio(m_link), m_midiOut(m_link, m_audio.engine())
 {
   for (unsigned i = 0; i < k_clockMultipliers.size(); ++i)
   {
