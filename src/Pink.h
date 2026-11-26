@@ -7,8 +7,13 @@
 
 #pragma once
 
+#include <atomic>
+#include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include <ableton/Link.hpp>
 
@@ -47,6 +52,7 @@ public:
   bool isPlaying();
 
   double tempo();
+  //! Request a new session tempo (user action). Do not call this from Link's tempo callback.
   void setTempo(double /*tempo_*/);
 
   double loopLength();
@@ -59,6 +65,9 @@ public:
   void setClockMultiplierIndex(std::size_t /*index_*/);
 
   std::size_t numPeers() const;
+
+  //! Monitoring only (see Engine::Diagnostics).
+  Engine::Diagnostics diagnostics() const;
 
   class Listener
   {
@@ -88,12 +97,17 @@ public:
   void removeListener(const Listener::Id /*id_*/);
 
 private:
-  void setNumPeers(std::size_t numPeers_);
+  // Link callbacks, invoked on a Link-managed thread.
+  void onLinkTempoChanged(double tempo_);
+  void onLinkNumPeersChanged(std::size_t numPeers_);
+
+  void notifyListeners(const std::function<void(Listener&)>& fn_);
 
   unsigned m_defaultClockMultiplier;
-  unsigned m_currentClockMultiplier;
+  std::atomic<unsigned> m_currentClockMultiplier;
 
   std::mutex m_mtxRunning;
+  std::mutex m_mtxListeners;
 
   ableton::Link m_link;
   Audio m_audio;

@@ -67,6 +67,7 @@ echo ""
 echo ""
 echo ""
 echo -e "[ \033[1m\033[96mpink\033[m ] Update submodules -----------------------------------------------------"
+git submodule sync --recursive
 git submodule update --init --recursive
 
 echo ""
@@ -123,7 +124,7 @@ echo -e "[ \033[1m\033[96mpink\033[m ] Build pink and install the binary and the
 rm -rf build
 mkdir build
 cd build
-if [ $1 == "no-ui" ]
+if [ "$1" == "no-ui" ]
   then
     cmake -DCMAKE_BUILD_TYPE=Release -DUSE_PI_ZERO=OFF -DUSE_WEBSOCKET=ON -DJUST_INSTALL_CEREAL=ON ..
   else
@@ -171,7 +172,16 @@ echo ""
 echo -e "[ \033[1m\033[96mpink\033[m ] Optimize system configuration -----------------------------------------"
 if [ $platform == "linux-rpi" ];
   then
-    echo -n performance | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    # Fixed CPU clock: frequency scaling causes latency spikes. (Writing the cpufreq governor via
+    # sysfs, as done before, does not survive a reboot.)
+    BOOTCFG=/boot/firmware/config.txt
+    [ -f $BOOTCFG ] || BOOTCFG=/boot/config.txt
+    grep -q '^force_turbo=1' $BOOTCFG || echo 'force_turbo=1' | sudo tee -a $BOOTCFG
+
+    # WLAN power saving drops Link's multicast packets, peers then drop out and rejoin.
+    sudo cp support/system/wifi-powersave-off.service /etc/systemd/system/.
+    sudo systemctl daemon-reload
+    sudo systemctl enable wifi-powersave-off.service
 fi
 
 echo ""

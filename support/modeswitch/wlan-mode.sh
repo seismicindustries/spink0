@@ -28,6 +28,7 @@ ap_mode(){
 #  sudo iw dev wlan0 scan ap-force
   wla_cli scan_results
   /etc/init.d/pink start
+  iw dev wlan0 set power_save off
   amixer set PCM 100%
 	
 }
@@ -52,6 +53,7 @@ client_mode(){
   sudo dhclient -4 -v wlan0
   sleep 1
   sudo dhclient -4 -v wlan0
+  iw dev wlan0 set power_save off
   amixer set PCM 100% 
 }
 

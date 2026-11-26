@@ -6,13 +6,19 @@
 ##########      #############################################################
 shaduzlabs.com #####*/
 
+#include <chrono>
+#include <cstdarg>
+#include <cstdio>
+#include <iostream>
 #include <memory>
+#include <thread>
 #include <tuple>
 
 #ifdef __linux__
 
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -143,8 +149,10 @@ static void daemonize(const char* runDir_, const char* pidFile_)
     exit(EXIT_FAILURE);
   }
 
-  /* Close out the open file descriptors */
-  for (int fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--)
+  /* Close out the open file descriptors. Close syslog's socket properly first: otherwise its
+     descriptor number gets reused (e.g. by the PID lock file below) and syslog later closes it. */
+  closelog();
+  for (int fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--)
   {
     close(fd);
   }
@@ -159,6 +167,8 @@ static void daemonize(const char* runDir_, const char* pidFile_)
 
   /* STDERR */
   dup(i);
+
+  openlog(DAEMON_NAME, LOG_CONS | LOG_PID, LOG_USER);
 
   if ((chdir(runDir_)) < 0)
   {
@@ -214,9 +224,23 @@ public:
   void info(const char* message_)
   {
 #ifdef __linux__
-    syslog(LOG_INFO, message_);
+    syslog(LOG_INFO, "%s", message_); // never pass a message as the format string
 #else
     std::cout << DAEMON_NAME << ": " << message_ << std::endl;
+#endif
+  }
+
+  void warning(const char* format_, ...) __attribute__((format(printf, 2, 3)))
+  {
+    char message[256];
+    va_list args;
+    va_start(args, format_);
+    vsnprintf(message, sizeof(message), format_, args);
+    va_end(args);
+#ifdef __linux__
+    syslog(LOG_WARNING, "%s", message);
+#else
+    std::cout << DAEMON_NAME << ": " << message << std::endl;
 #endif
   }
 
@@ -235,6 +259,67 @@ public:
 using namespace sl;
 using namespace sl::pi;
 
+//--------------------------------------------------------------------------------------------------
+
+//! Logs session events, so hiccups can be correlated with peer changes (journalctl -t pinkd).
+class LogListener : public Pink::Listener
+{
+public:
+  LogListener(std::shared_ptr<Pink> pink_, ScopedLog& log_) : m_pink(std::move(pink_)), m_log(log_)
+  {
+    m_pink->addListener(pinkListenerId(), this);
+  }
+  ~LogListener() override
+  {
+    m_pink->removeListener(pinkListenerId());
+  }
+
+  void statusChanged(bool enabled_) override
+  {
+    m_log.warning("link %s", enabled_ ? "enabled" : "disabled");
+  }
+  void tempoChanged(double) override
+  {
+  }
+  void loopLengthChanged(double) override
+  {
+  }
+  void numPeersChanged(std::size_t n_) override
+  {
+    m_log.warning("link peers: %zu", n_);
+  }
+  void runStatusChanged(bool playing_) override
+  {
+    m_log.warning("clock %s", playing_ ? "started" : "stopped");
+  }
+  void clockMultiplierChanged(const std::string&) override
+  {
+  }
+
+private:
+  std::shared_ptr<Pink> m_pink;
+  ScopedLog& m_log;
+};
+
+//--------------------------------------------------------------------------------------------------
+
+//! Reports new audio underruns and timeline jumps once per second (the audio thread only counts).
+static void logDiagnostics(ScopedLog& log_, const Engine::Diagnostics& now_, Engine::Diagnostics& last_)
+{
+  if (now_.underruns != last_.underruns)
+  {
+    log_.warning("audio underrun x%u (total %u)", now_.underruns - last_.underruns, now_.underruns);
+  }
+  if (now_.beatJumps != last_.beatJumps)
+  {
+    log_.warning("timeline jump x%u (total %u), last %+.2f ms",
+      now_.beatJumps - last_.beatJumps,
+      now_.beatJumps,
+      now_.lastBeatJumpUs / 1000.);
+  }
+  last_ = now_;
+}
+
 int main(int argc_, char* argv_[])
 {
   ScopedLog log;
@@ -245,11 +330,10 @@ int main(int argc_, char* argv_[])
     daemonize("/tmp/", "/var/run/pinkd.pid");
   }
 
-  std::shared_ptr<Pink> pink(new Pink(120., 4., 1.0));
-
   try
   {
-    std::shared_ptr<Pink> pink(new Pink(120., 4., 1.0));
+    // Exactly one instance: every Pink owns its own Link peer and its own audio stream.
+    auto pink = std::make_shared<Pink>(120., 4., 1.0);
 
 #ifdef UI_USE_WEBSOCKET
     UserInterfaceWebSocket webSocket(pink);
@@ -261,11 +345,15 @@ int main(int argc_, char* argv_[])
     UserInterfaceNone zero(pink);
 #endif
 
+    LogListener logListener(pink, log);
+
     log.info("daemon running");
 
+    auto lastDiagnostics = pink->diagnostics();
     while (true)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      logDiagnostics(log, pink->diagnostics(), lastDiagnostics);
     }
   }
   catch (const std::exception& e)

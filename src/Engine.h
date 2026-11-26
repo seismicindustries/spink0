@@ -8,6 +8,8 @@
 #pragma once
 
 #include <ableton/Link.hpp>
+#include <atomic>
+#include <cstdint>
 #include <mutex>
 
 // -------------------------------------------------------------------------------------------------
@@ -24,6 +26,14 @@ class Engine
 public:
   using Latency = std::chrono::microseconds;
   using AudioBuffer = std::vector<double>;
+
+  //! Counters filled by the audio thread, read (lock-free) by the monitoring loop in main().
+  struct Diagnostics
+  {
+    std::uint32_t underruns;
+    std::uint32_t beatJumps;
+    std::int32_t lastBeatJumpUs;
+  };
 
   Engine(ableton::Link& link);
   void startPlaying();
@@ -50,7 +60,14 @@ public:
   const AudioBuffer& bufferClock() const;
   const AudioBuffer& bufferReset() const;
 
+  //! Audio thread only. numSamples must not exceed bufferSize().
   void process(const std::chrono::microseconds hostTime, std::size_t numSamples);
+
+  //! Audio thread only: the audio backend reported an output underrun.
+  void noteUnderrun();
+
+  //! Any thread.
+  Diagnostics diagnostics() const;
 
 private:
   struct Data
@@ -59,11 +76,13 @@ private:
     bool resetBeatTime;
     bool isPlaying;
     double quantum;
+    double clockMultiplier;
   };
 
   Data pullEngineData();
   void renderMetronomeIntoBuffer(ableton::Link::SessionState sessionState,
     double quantum,
+    double clockMultiplier,
     std::chrono::microseconds beginHostTime,
     std::size_t numSamples);
 
@@ -77,8 +96,16 @@ private:
   std::chrono::microseconds m_timeAtLastClick;
   std::chrono::microseconds m_timeAtLastReset;
   double m_phase;
-  std::mutex m_engineDataGuard;
-  double m_clockMultiplier;
+  mutable std::mutex m_engineDataGuard;
+
+  // timeline continuity check (audio thread only)
+  bool m_hasExpectedBeat;
+  double m_expectedBeat;
+  double m_expectedBeatQuantum;
+
+  std::atomic<std::uint32_t> m_underruns;
+  std::atomic<std::uint32_t> m_beatJumps;
+  std::atomic<std::int32_t> m_lastBeatJumpUs;
 };
 
 // -------------------------------------------------------------------------------------------------

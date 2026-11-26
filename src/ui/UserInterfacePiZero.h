@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <future>
 #include <mutex>
 #include <string>
@@ -80,15 +81,22 @@ private:
   std::atomic_bool m_runButtonPressed{false};
   std::atomic_bool m_encoderButtonPressed{false};
 
-  std::thread m_threadDisplay;
-  std::mutex m_mtxDisplay;
-  std::string m_displayString;
+  std::thread m_threadDisplay; // started at the end of the constructor, after GPIO setup
+
+  std::mutex m_mtxDisplay; // guards m_displayString, m_displayShowDot
+  std::string m_displayString{"    "};
   bool m_displayShowDot{false};
 
-  DisplayState m_displayState;
+  std::atomic<DisplayState> m_displayState;
+
+  std::mutex m_mtxEncoder; // encoder A and B interrupts arrive on two different threads
   unsigned m_lastEncoderValue;
 
   std::atomic_bool m_engineRunning{false};
+
+  // Written by Pink listener callbacks (Link, GPIO interrupt and web socket threads), read by the
+  // display thread.
+  std::mutex m_mtxState;
   std::size_t m_numPeers{0};
   double m_engineTempo{0.};
   double m_engineLoopLength{0.};

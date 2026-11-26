@@ -58,7 +58,7 @@ std::string randomId(std::size_t length_)
 
   std::string id;
 
-  for (int i = 0; i < length_; ++i)
+  for (std::size_t i = 0; i < length_; ++i)
   {
     id += characters[rand() % (sizeof(characters) - 1)];
   }
@@ -102,13 +102,16 @@ Pink::Pink(double tempo_, double length_, double clockMultiplier_) : m_link(temp
   }
   using namespace std::placeholders;
 
-  m_link.setTempoCallback(std::bind(&Pink::setTempo, this, _1));
+  // The tempo callback only reports remote changes to the UIs. It used to call setTempo(), which
+  // re-committed every remote tempo change as our own and echoed it back into the session.
+  m_link.setTempoCallback(std::bind(&Pink::onLinkTempoChanged, this, _1));
 
-  m_link.setNumPeersCallback(std::bind(&Pink::setNumPeers, this, _1));
+  m_link.setNumPeersCallback(std::bind(&Pink::onLinkNumPeersChanged, this, _1));
 
   m_link.enable(true);
 
-  setTempo(tempo_);
+  // No setTempo(tempo_) here: m_link was constructed with it as the initial tempo already, and
+  // re-requesting it would push 120 BPM onto a session we are just joining.
   setLoopLength(length_);
 
   m_audio.engine().setClockMultiplier(k_clockMultipliers[m_currentClockMultiplier].value);
@@ -128,21 +131,21 @@ void Pink::setEnabled(bool enabled_)
   std::lock_guard<std::mutex> lock(m_mtxRunning);
   m_link.enable(enabled_);
 
-  for (const auto& l : m_listeners)
+  const bool enabled = m_link.isEnabled();
+  bool stopped = false;
+  if (!enabled && m_audio.engine().isPlaying())
   {
-    auto listener = l.second;
-    if (listener == nullptr)
-    {
-      continue;
-    }
-
-    listener->statusChanged(m_link.isEnabled());
-    if (!m_link.isEnabled() && m_audio.engine().isPlaying())
-    {
-      m_audio.engine().stopPlaying();
-      listener->runStatusChanged(m_audio.engine().isPlaying());
-    }
+    m_audio.engine().stopPlaying();
+    stopped = true;
   }
+
+  notifyListeners([&](Listener& l) {
+    l.statusChanged(enabled);
+    if (stopped)
+    {
+      l.runStatusChanged(false);
+    }
+  });
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -165,15 +168,7 @@ void Pink::togglePlay()
     m_audio.engine().startPlaying();
   }
 
-  for (const auto& l : m_listeners)
-  {
-    auto listener = l.second;
-    if (listener == nullptr)
-    {
-      continue;
-    }
-    listener->runStatusChanged(!playing);
-  }
+  notifyListeners([&](Listener& l) { l.runStatusChanged(!playing); });
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -195,30 +190,36 @@ double Pink::tempo()
 void Pink::setTempo(double tempo_)
 {
   m_audio.engine().setTempo(tempo_);
-
-  for (const auto& l : m_listeners)
-  {
-    auto listener = l.second;
-    if (listener == nullptr)
-    {
-      continue;
-    }
-    listener->tempoChanged(tempo_);
-  }
+  notifyListeners([&](Listener& l) { l.tempoChanged(tempo_); });
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void Pink::setNumPeers(std::size_t numPeers_)
+void Pink::onLinkTempoChanged(double tempo_)
 {
+  notifyListeners([&](Listener& l) { l.tempoChanged(tempo_); });
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void Pink::onLinkNumPeersChanged(std::size_t numPeers_)
+{
+  notifyListeners([&](Listener& l) { l.numPeersChanged(numPeers_); });
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void Pink::notifyListeners(const std::function<void(Listener&)>& fn_)
+{
+  // Listeners are called from several threads (Link, GPIO interrupts, web socket). They must not
+  // call addListener()/removeListener() from inside a callback.
+  std::lock_guard<std::mutex> lock(m_mtxListeners);
   for (const auto& l : m_listeners)
   {
-    auto listener = l.second;
-    if (listener == nullptr)
+    if (l.second != nullptr)
     {
-      continue;
+      fn_(*l.second);
     }
-    listener->numPeersChanged(numPeers_);
   }
 }
 
@@ -234,16 +235,7 @@ double Pink::loopLength()
 void Pink::setLoopLength(double length_)
 {
   m_audio.engine().setQuantum(length_);
-
-  for (const auto& l : m_listeners)
-  {
-    auto listener = l.second;
-    if (listener == nullptr)
-    {
-      continue;
-    }
-    listener->loopLengthChanged(length_);
-  }
+  notifyListeners([&](Listener& l) { l.loopLengthChanged(length_); });
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -284,17 +276,10 @@ void Pink::setClockMultiplierIndex(std::size_t index_)
 {
   if (index_ < k_clockMultipliers.size())
   {
-    m_currentClockMultiplier = index_;
-    m_audio.engine().setClockMultiplier(k_clockMultipliers[m_currentClockMultiplier].value);
-    for (const auto& l : m_listeners)
-    {
-      auto listener = l.second;
-      if (listener == nullptr)
-      {
-        continue;
-      }
-      listener->clockMultiplierChanged(k_clockMultipliers[m_currentClockMultiplier].label);
-    }
+    m_currentClockMultiplier = static_cast<unsigned>(index_);
+    m_audio.engine().setClockMultiplier(k_clockMultipliers[index_].value);
+    const auto& label = k_clockMultipliers[index_].label;
+    notifyListeners([&](Listener& l) { l.clockMultiplierChanged(label); });
   }
 }
 
@@ -307,6 +292,13 @@ std::size_t Pink::numPeers() const
 
 // -------------------------------------------------------------------------------------------------
 
+Engine::Diagnostics Pink::diagnostics() const
+{
+  return m_audio.engine().diagnostics();
+}
+
+// -------------------------------------------------------------------------------------------------
+
 Pink::Listener::Listener() : m_id(randomId(kListenerIdLength))
 {
 }
@@ -315,6 +307,7 @@ Pink::Listener::Listener() : m_id(randomId(kListenerIdLength))
 
 void Pink::addListener(const Listener::Id id_, Listener* l_)
 {
+  std::lock_guard<std::mutex> lock(m_mtxListeners);
   m_listeners[id_] = l_;
 }
 
@@ -322,6 +315,7 @@ void Pink::addListener(const Listener::Id id_, Listener* l_)
 
 void Pink::removeListener(const Listener::Id id_)
 {
+  std::lock_guard<std::mutex> lock(m_mtxListeners);
   m_listeners.erase(id_);
 }
 
