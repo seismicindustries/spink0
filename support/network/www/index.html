@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spink0 setup</title>
+<style>
+  :root {
+    --bg: #f6f4f5; --card: #ffffff; --text: #1d1a1c; --muted: #6f6870; --line: #e6e1e4;
+    --accent: #e0307a; --accent-text: #ffffff; --ok: #1f9d5b; --warn: #b7791f; --danger: #c53030;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151214; --card: #1f1b1e; --text: #f1edef; --muted: #a59ca2; --line: #342d32;
+            --accent: #ff4f98; --ok: #48c78e; --warn: #e0a84a; --danger: #f56565; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 34rem; margin: 0 auto; padding: 1rem 1rem 3rem; }
+  header { display: flex; align-items: center; justify-content: space-between; margin: .5rem 0 1rem; }
+  h1 { font-size: 1.6rem; margin: 0; letter-spacing: -.02em; }
+  h1 span { color: var(--accent); }
+  h2 { font-size: .8rem; margin: 0 0 .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .pill { font-size: .8rem; font-weight: 600; padding: .25rem .65rem; border-radius: 99px; border: 1px solid var(--line); }
+  .pill.ap { color: var(--accent); border-color: var(--accent); }
+  .pill.net { color: var(--ok); border-color: var(--ok); }
+  .pill.none { color: var(--warn); border-color: var(--warn); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; margin-bottom: 1rem; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+  .stat b { display: block; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .stat small { color: var(--muted); font-size: .78rem; }
+  .meta { color: var(--muted); font-size: .8rem; margin-top: .75rem; }
+  .notice { background: color-mix(in srgb, var(--warn) 14%, transparent); border-radius: 10px; padding: .65rem .8rem; font-size: .9rem; margin-bottom: 1rem; }
+  ul { list-style: none; margin: 0 0 1rem; padding: 0; }
+  li { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .55rem 0; border-bottom: 1px solid var(--line); }
+  li:last-child { border-bottom: 0; }
+  li .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  li .active { color: var(--ok); font-size: .8rem; margin-left: .4rem; }
+  .empty { color: var(--muted); font-size: .9rem; }
+  label { display: block; font-size: .85rem; font-weight: 600; margin: .6rem 0 .3rem; }
+  .row { display: flex; gap: .5rem; }
+  input[type=text], input[type=password] { width: 100%; font: inherit; padding: .6rem .7rem; border-radius: 10px;
+         border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .check { display: flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--muted); margin-top: .4rem; font-weight: 400; }
+  button { font: inherit; font-weight: 600; padding: .6rem 1rem; border-radius: 10px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--text); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button.small { padding: .3rem .7rem; font-size: .85rem; }
+  button.danger { color: var(--danger); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+  .hint { color: var(--muted); font-size: .85rem; margin: .75rem 0 0; }
+  #toast { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); max-width: 90vw; padding: .65rem 1rem;
+           border-radius: 10px; background: var(--text); color: var(--bg); font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+  #toast.error { background: var(--danger); color: #fff; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>spink<span>0</span></h1>
+    <span id="mode" class="pill">…</span>
+  </header>
+
+  <div id="readonly" class="notice" hidden>
+    Read only. To change settings, hold the <b>encoder button for 3 seconds</b>: the module
+    switches to its own access point. Join it with your phone and this page opens again.
+  </div>
+
+  <section>
+    <h2>Clock</h2>
+    <div class="stats">
+      <div class="stat"><b id="tempo">–</b><small>BPM</small></div>
+      <div class="stat"><b id="peers">–</b><small>Link peers</small></div>
+      <div class="stat"><b id="playing">–</b><small>clock</small></div>
+    </div>
+    <div class="meta" id="daemon-meta"></div>
+  </section>
+
+  <section>
+    <h2>WLAN networks</h2>
+    <p class="hint" id="connection" style="margin:0 0 .75rem"></p>
+    <ul id="saved"><li class="empty">Loading…</li></ul>
+
+    <form id="add" autocomplete="off">
+      <label for="ssid">Network name</label>
+      <div class="row">
+        <input id="ssid" type="text" list="visible" maxlength="32" required>
+        <button type="button" id="scan" title="Search for networks">Search</button>
+      </div>
+      <datalist id="visible"></datalist>
+      <label for="password">Password</label>
+      <input id="password" type="password" maxlength="63" placeholder="empty for open networks">
+      <label class="check"><input id="show" type="checkbox"> show password</label>
+      <div class="actions"><button class="primary" type="submit" id="save">Save network</button></div>
+    </form>
+  </section>
+
+  <section>
+    <h2>Mode</h2>
+    <div class="actions" style="margin-top:0">
+      <button id="to-client">Join saved network</button>
+      <button id="to-ap">Access point</button>
+    </div>
+    <p class="hint">
+      The module joins your saved networks by itself and opens its own access point when none is
+      in range. On the module: hold the encoder button for 3 seconds to switch.
+    </p>
+  </section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let canEdit = false;
+let activeConnection = null;
+
+function toast(message, isError = false) {
+  const el = $("toast");
+  el.textContent = message;
+  el.className = "show" + (isError ? " error" : "");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => (el.className = ""), 4000);
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: options.body ? { "Content-Type": "application/json" } : {},
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || response.statusText);
+  return data;
+}
+
+function setEditable(editable) {
+  canEdit = editable;
+  $("readonly").hidden = editable;
+  for (const el of document.querySelectorAll("#add input, #add button, #to-client, #to-ap, .remove")) {
+    el.disabled = !editable;
+  }
+}
+
+function renderStatus(status) {
+  const mode = status.network.mode;
+  const pill = $("mode");
+  pill.textContent = mode === "AP" ? "Access point" : mode === "NET" ? "Connected" : "Offline";
+  pill.className = "pill " + (mode === "AP" ? "ap" : mode === "NET" ? "net" : "none");
+
+  activeConnection = status.network.connection;
+  $("connection").textContent =
+    mode === "AP" ? `The module's own network "${status.network.ssid || "spink"}" is active.`
+    : mode === "NET" ? `Connected to "${activeConnection}"${status.network.ip ? ` (${status.network.ip})` : ""}.`
+    : "Not connected.";
+
+  const d = status.daemon;
+  if (d) {
+    $("tempo").textContent = d.tempo.toFixed(1);
+    $("peers").textContent = d.peers;
+    $("playing").textContent = d.playing ? "running" : "stopped";
+    $("daemon-meta").textContent =
+      `length ${d.loopLength} · multiplier ${d.clockMultiplier} · pinkd ${d.version}` +
+      (d.underruns ? ` · ${d.underruns} audio underruns` : "");
+  } else {
+    $("tempo").textContent = $("peers").textContent = $("playing").textContent = "–";
+    $("daemon-meta").textContent = "pinkd is not running.";
+  }
+  setEditable(status.canEdit);
+  markActive();
+}
+
+function renderSaved(names) {
+  const list = $("saved");
+  list.textContent = "";
+  if (!names.length) {
+    list.innerHTML = '<li class="empty">No networks saved yet.</li>';
+    return;
+  }
+  for (const name of names) {
+    const li = document.createElement("li");
+    const label = document.createElement("span");
+    label.className = "name";
+    label.textContent = name;
+    label.dataset.name = name;
+    const remove = document.createElement("button");
+    remove.className = "small danger remove";
+    remove.textContent = "Remove";
+    remove.disabled = !canEdit;
+    remove.onclick = () => removeNetwork(name);
+    li.append(label, remove);
+    list.append(li);
+  }
+  markActive();
+}
+
+function markActive() {
+  for (const label of document.querySelectorAll("#saved .name")) {
+    label.querySelector(".active")?.remove();
+    if (label.dataset.name === activeConnection) {
+      const tag = document.createElement("span");
+      tag.className = "active";
+      tag.textContent = "connected";
+      label.append(tag);
+    }
+  }
+}
+
+async function refreshStatus() {
+  try { renderStatus(await api("/api/status")); }
+  catch { $("mode").textContent = "no connection"; $("mode").className = "pill none"; }
+}
+
+async function refreshSaved() {
+  try { renderSaved((await api("/api/networks")).saved); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function scan() {
+  $("scan").disabled = true;
+  try {
+    const { visible } = await api("/api/scan");
+    $("visible").innerHTML = "";
+    for (const n of visible) {
+      const option = document.createElement("option");
+      option.value = n.ssid;
+      option.label = `${n.signal}%${n.secure ? "" : " · open"}`;
+      $("visible").append(option);
+    }
+    toast(visible.length ? `${visible.length} networks found` : "No networks found");
+  } catch (e) { toast(e.message, true); }
+  finally { $("scan").disabled = !canEdit; }
+}
+
+async function removeNetwork(name) {
+  if (!confirm(`Remove "${name}"?`)) return;
+  try { renderSaved((await api("/api/networks/" + encodeURIComponent(name), { method: "DELETE" })).saved); toast("Removed"); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function switchMode(mode) {
+  const leaving = mode === "client";
+  if (leaving && !confirm("The module leaves access point mode and joins a saved network. " +
+                          "This page disconnects; reconnect your phone to that network.")) return;
+  try {
+    await api("/api/mode", { method: "POST", body: JSON.stringify({ mode }) });
+    toast(leaving ? "Switching… this connection will drop." : "Switching to access point…");
+  } catch (e) { toast(e.message, true); }
+}
+
+$("add").onsubmit = async (event) => {
+  event.preventDefault();
+  const ssid = $("ssid").value.trim();
+  const password = $("password").value;
+  if (password && (password.length < 8 || password.length > 63)) {
+    toast("The password must be 8 to 63 characters (or empty).", true);
+    return;
+  }
+  $("save").disabled = true;
+  try {
+    renderSaved((await api("/api/networks", { method: "POST", body: JSON.stringify({ ssid, password }) })).saved);
+    $("add").reset();
+    toast(`"${ssid}" saved`);
+  } catch (e) { toast(e.message, true); }
+  finally { $("save").disabled = !canEdit; }
+};
+$("show").onchange = () => ($("password").type = $("show").checked ? "text" : "password");
+$("scan").onclick = scan;
+$("to-client").onclick = () => switchMode("client");
+$("to-ap").onclick = () => switchMode("ap");
+
+refreshStatus().then(refreshSaved);
+setInterval(refreshStatus, 2000);
+</script>
+</body>
+</html>

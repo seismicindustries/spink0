@@ -50,13 +50,13 @@ public:
   void setEnabled(bool /*enabled_*/);
 
   void togglePlay();
-  bool isPlaying();
+  bool isPlaying() const;
 
-  double tempo();
+  double tempo() const;
   //! Request a new session tempo (user action). Do not call this from Link's tempo callback.
   void setTempo(double /*tempo_*/);
 
-  double loopLength();
+  double loopLength() const;
   void setLoopLength(double /*loopLength_*/);
 
   std::size_t numClockMultipliers() const;
@@ -69,6 +69,12 @@ public:
 
   //! Monitoring only (see Engine::Diagnostics).
   Engine::Diagnostics diagnostics() const;
+
+  //! Audio device and stream parameters, for the log.
+  const std::string& audioDescription() const
+  {
+    return m_audio.description();
+  }
 
   class Listener
   {

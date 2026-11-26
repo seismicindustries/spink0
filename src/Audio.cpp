@@ -9,19 +9,82 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <cstdlib>
+#include <sstream>
 #include <stdexcept>
+#include <vector>
+
+#ifdef __linux__
+#include <pa_linux_alsa.h>
+#endif
 
 // -------------------------------------------------------------------------------------------------
 
 namespace
 {
-#if __APPLE__
-const double k_sampleRate{44100.};
-#else
-const double k_sampleRate{11025.};
-#endif
-const std::size_t k_bufferSize{256};
+
+//! Preferred sample rates, lowest first: the clock/reset pulses need little resolution
+//! (11025 Hz = 91 us per sample) and the Pi Zero has a single core.
+const std::vector<double> k_sampleRates{11025., 22050., 44100., 48000.};
+
+//! Buffer duration, ~23 ms (256 frames at 11025 Hz).
+const double k_bufferSeconds{256. / 11025.};
+
+//! Device name fragments tried in order when $PINK_AUDIO_DEVICE is not set.
+const std::vector<std::string> k_preferredDevices{"Headphones", "bcm2835"};
+
+// -------------------------------------------------------------------------------------------------
+
+bool isStereoOutput(PaDeviceIndex device_)
+{
+  const PaDeviceInfo* info = Pa_GetDeviceInfo(device_);
+  return info != nullptr && info->maxOutputChannels >= 2;
 }
+
+// -------------------------------------------------------------------------------------------------
+
+PaDeviceIndex findDevice(const std::string& nameFragment_)
+{
+  for (PaDeviceIndex i = 0; i < Pa_GetDeviceCount(); ++i)
+  {
+    const PaDeviceInfo* info = Pa_GetDeviceInfo(i);
+    if (info != nullptr && isStereoOutput(i)
+        && std::string(info->name).find(nameFragment_) != std::string::npos)
+    {
+      return i;
+    }
+  }
+  return paNoDevice;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+PaDeviceIndex selectDevice()
+{
+  if (const char* requested = std::getenv("PINK_AUDIO_DEVICE"))
+  {
+    const auto device = findDevice(requested);
+    if (device == paNoDevice)
+    {
+      throw std::runtime_error(std::string("No audio output device matching PINK_AUDIO_DEVICE=")
+                               + requested);
+    }
+    return device;
+  }
+  for (const auto& name : k_preferredDevices)
+  {
+    const auto device = findDevice(name);
+    if (device != paNoDevice)
+    {
+      return device;
+    }
+  }
+  return Pa_GetDefaultOutputDevice();
+}
+
+} // namespace
+
 // -------------------------------------------------------------------------------------------------
 
 namespace sl
@@ -31,88 +94,36 @@ namespace pi
 
 // -------------------------------------------------------------------------------------------------
 
-Audio::Audio(ableton::Link& link) : m_engine(link), m_sampleTime(0.)
+Audio::Audio(ableton::Link& link) : m_engine(link), m_sampleTime(0.), m_stream(nullptr)
 {
-  m_engine.setSampleRate(k_sampleRate);
-  m_engine.setBufferSize(k_bufferSize);
   initialize();
   start();
-
-#ifdef AUDIO_USE_RTAUDIO
-  int numDevices = m_audioDevice.getDeviceCount();
-#else
-  int numDevices = Pa_GetDeviceCount();
-#endif
-
-  if (numDevices < 0)
-  {
-    throw std::runtime_error("ERROR: Pa_CountDevices returned " + std::to_string(numDevices));
-  }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 Audio::~Audio()
 {
-  stop();
-  uninitialize();
+  try
+  {
+    stop();
+    uninitialize();
+  }
+  catch (const std::exception&)
+  {
+    // nothing sensible to do while shutting down
+  }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-#ifdef AUDIO_USE_RTAUDIO
-int Audio::audioCallbackRTA(void* outputBuffer,
-  void* inputBuffer,
-  unsigned int nBufferFrames,
-  double streamTime,
-  RtAudioStreamStatus status,
-  void* userData)
-{
-
-  using namespace std::chrono;
-  float* buffer = static_cast<float*>(outputBuffer);
-  Audio& platform = *static_cast<Audio*>(userData);
-  Engine& engine = platform.m_engine;
-
-  if (status & RTAUDIO_OUTPUT_UNDERFLOW)
-  {
-    engine.noteUnderrun();
-  }
-
-  const auto hostTime = platform.m_hostTimeFilter.sampleTimeToHostTime(platform.m_sampleTime);
-
-  platform.m_sampleTime += nBufferFrames;
-
-  const auto bufferBeginAtOutput = hostTime + engine.outputLatency();
-
-  // Never render more than the engine buffers hold (they are sized from the negotiated buffer
-  // size in initialize(), this is only a safety net).
-  const std::size_t numFrames = std::min<std::size_t>(nBufferFrames, engine.bufferSize());
-  engine.process(bufferBeginAtOutput, numFrames);
-
-  const auto& bufferReset = engine.bufferReset();
-  const auto& bufferClock = engine.bufferClock();
-
-  for (std::size_t i = 0; i < nBufferFrames; ++i)
-  {
-    buffer[i * 2] = i < numFrames ? static_cast<float>(bufferReset[i]) : 0.f;
-    buffer[i * 2 + 1] = i < numFrames ? static_cast<float>(bufferClock[i]) : 0.f;
-  }
-
-  return 0;
-}
-
-#else
-// -------------------------------------------------------------------------------------------------
-
-int Audio::audioCallbackPA(const void* /*inputBuffer*/,
+int Audio::audioCallback(const void* /*inputBuffer*/,
   void* outputBuffer,
   unsigned long inNumFrames,
   const PaStreamCallbackTimeInfo* /*timeInfo*/,
   PaStreamCallbackFlags statusFlags,
   void* userData)
 {
-  using namespace std::chrono;
   float* buffer = static_cast<float*>(outputBuffer);
   Audio& platform = *static_cast<Audio*>(userData);
   Engine& engine = platform.m_engine;
@@ -123,199 +134,129 @@ int Audio::audioCallbackPA(const void* /*inputBuffer*/,
   }
 
   const auto hostTime = platform.m_hostTimeFilter.sampleTimeToHostTime(platform.m_sampleTime);
-
-  platform.m_sampleTime += inNumFrames;
+  platform.m_sampleTime += static_cast<double>(inNumFrames);
 
   const auto bufferBeginAtOutput = hostTime + engine.outputLatency();
 
-  engine.process(bufferBeginAtOutput, inNumFrames);
+  // The stream is opened with a fixed buffer size equal to the engine's, this is a safety net.
+  const std::size_t numFrames = std::min<std::size_t>(inNumFrames, engine.bufferSize());
+  engine.process(bufferBeginAtOutput, numFrames);
 
   const auto& bufferReset = engine.bufferReset();
   const auto& bufferClock = engine.bufferClock();
-  for (unsigned long i = 0; i < inNumFrames; ++i)
+  for (std::size_t i = 0; i < inNumFrames; ++i)
   {
-    buffer[i * 2] = static_cast<float>(bufferReset[i]);
-    buffer[i * 2 + 1] = static_cast<float>(bufferClock[i]);
+    buffer[i * 2] = i < numFrames ? static_cast<float>(bufferReset[i]) : 0.f;
+    buffer[i * 2 + 1] = i < numFrames ? static_cast<float>(bufferClock[i]) : 0.f;
   }
 
   return paContinue;
 }
-#endif
 
 // -------------------------------------------------------------------------------------------------
 
 void Audio::initialize()
 {
-#ifdef AUDIO_USE_RTAUDIO
-
-  if (m_audioDevice.getDeviceCount() < 1)
-  {
-    throw std::runtime_error("No audio interfaces found");
-  }
-
-  try
-  {
-    m_audioStreamParameters.deviceId = m_audioDevice.getDefaultOutputDevice();
-    m_audioStreamParameters.nChannels = 2;
-    m_audioStreamParameters.firstChannel = 0;
-    m_audioBufferSize = m_engine.bufferSize() / 2;
-
-
-    RtAudio::StreamOptions options;
-    options.flags = RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_MINIMIZE_LATENCY | RTAUDIO_HOG_DEVICE;
-    options.numberOfBuffers = 8;
-
-    m_audioDevice.openStream(&m_audioStreamParameters,
-      NULL,
-      RTAUDIO_FLOAT32,
-      static_cast<unsigned>(m_engine.sampleRate()),
-      &m_audioBufferSize,
-      &Audio::audioCallbackRTA,
-      this,
-      &options);
-
-    // RtAudio may pick a different buffer size than requested: size the engine buffers to match,
-    // otherwise process() would write past their end.
-    m_engine.setBufferSize(std::max<std::size_t>(m_audioBufferSize, m_engine.bufferSize()));
-
-    // Compensate the real output latency (in frames), like the PortAudio path does.
-    const auto latencyFrames = m_audioDevice.getStreamLatency();
-    m_engine.setOutputLatency(
-      std::chrono::microseconds(llround(latencyFrames * 1.0e6 / m_engine.sampleRate())));
-  }
-  catch (RtAudioError e)
-  {
-    throw std::runtime_error(e.getMessage());
-  }
-#else
   PaError result = Pa_Initialize();
-  if (result)
+  if (result != paNoError)
   {
-    throw std::runtime_error("Could not initialize Audio Engine (" + std::to_string(result) + ")");
-  };
+    throw std::runtime_error(std::string("Could not initialize PortAudio: ") + Pa_GetErrorText(result));
+  }
 
-  PaStreamParameters outputParameters;
-  outputParameters.device = Pa_GetDefaultOutputDevice();
+  PaStreamParameters outputParameters{};
+  outputParameters.device = selectDevice();
   if (outputParameters.device == paNoDevice)
   {
-    throw std::runtime_error("Could not get audio device");
+    throw std::runtime_error("No audio output device");
   }
-
+  const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(outputParameters.device);
   outputParameters.channelCount = 2;
   outputParameters.sampleFormat = paFloat32;
-  outputParameters.suggestedLatency
-    = Pa_GetDeviceInfo(outputParameters.device)->defaultHighOutputLatency;
-  outputParameters.hostApiSpecificStreamInfo = NULL;
-  m_engine.setOutputLatency(
-    std::chrono::microseconds(llround(outputParameters.suggestedLatency * 1.0e6)));
+  outputParameters.suggestedLatency = deviceInfo->defaultHighOutputLatency; // robust on a Pi Zero
+  outputParameters.hostApiSpecificStreamInfo = nullptr;
+
+  double sampleRate = 0.;
+  for (const auto rate : k_sampleRates)
+  {
+    if (Pa_IsFormatSupported(nullptr, &outputParameters, rate) == paFormatIsSupported)
+    {
+      sampleRate = rate;
+      break;
+    }
+  }
+  if (sampleRate == 0.)
+  {
+    throw std::runtime_error(
+      std::string("Audio device supports none of the sample rates: ") + deviceInfo->name);
+  }
+
+  const auto bufferSize = static_cast<std::size_t>(std::lround(sampleRate * k_bufferSeconds));
+  m_engine.setSampleRate(sampleRate);
+  m_engine.setBufferSize(bufferSize);
+
   result = Pa_OpenStream(&m_stream,
-    NULL,
+    nullptr,
     &outputParameters,
-    m_engine.sampleRate(),
-    m_engine.bufferSize(),
+    sampleRate,
+    static_cast<unsigned long>(bufferSize),
     paClipOff,
-    &audioCallbackPA,
+    &audioCallback,
     this);
-
-  if (result)
+  if (result != paNoError || m_stream == nullptr)
   {
-    throw std::runtime_error("Could not open stream.");
+    throw std::runtime_error(std::string("Could not open audio stream: ") + Pa_GetErrorText(result));
   }
 
-  if (!m_stream)
-  {
-    throw std::runtime_error("No valid audio stream.");
-  }
-
-  // Use the latency the stream actually got, not the one we suggested.
+  // Compensate the latency the stream actually got.
+  double latency = outputParameters.suggestedLatency;
   if (const PaStreamInfo* info = Pa_GetStreamInfo(m_stream))
   {
-    m_engine.setOutputLatency(std::chrono::microseconds(llround(info->outputLatency * 1.0e6)));
+    latency = info->outputLatency;
   }
+  m_engine.setOutputLatency(std::chrono::microseconds(std::llround(latency * 1.0e6)));
 
 #ifdef __linux__
-  // Run the ALSA callback thread with SCHED_FIFO. Without this it competes with every other
-  // thread on the single-core Pi Zero. Needs root or an rtprio limit (the daemon runs as root).
+  // SCHED_FIFO for the ALSA callback thread (needs root or an rtprio limit, see pinkd.service).
   PaAlsa_EnableRealtimeScheduling(m_stream, 1);
 #endif
-#endif
+
+  std::ostringstream description;
+  description << deviceInfo->name << " @ " << sampleRate << " Hz, " << bufferSize
+              << " frames, latency " << std::lround(latency * 1000.) << " ms";
+  m_description = description.str();
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void Audio::uninitialize()
 {
-#ifdef AUDIO_USE_RTAUDIO
-  try
+  if (m_stream != nullptr)
   {
-    m_audioDevice.closeStream();
-  }
-  catch (RtAudioError e)
-  {
-    throw std::runtime_error(e.getMessage());
-  }
-#else
-  PaError result = Pa_CloseStream(m_stream);
-  if (result)
-  {
-    throw std::runtime_error("Could not close Audio Stream. (" + std::to_string(result) + ")");
+    Pa_CloseStream(m_stream);
+    m_stream = nullptr;
   }
   Pa_Terminate();
-
-  if (!m_stream)
-  {
-    throw std::runtime_error("No valid audio stream.");
-  }
-#endif
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void Audio::start()
 {
-#ifdef AUDIO_USE_RTAUDIO
-  try
+  const PaError result = Pa_StartStream(m_stream);
+  if (result != paNoError)
   {
-    m_audioDevice.startStream();
+    throw std::runtime_error(std::string("Could not start audio stream: ") + Pa_GetErrorText(result));
   }
-  catch (RtAudioError e)
-  {
-    throw std::runtime_error(e.getMessage());
-  }
-#else
-  PaError result = Pa_StartStream(m_stream);
-  if (result)
-  {
-    throw std::runtime_error("Could not start Audio Stream. (" + std::to_string(result) + ")");
-  }
-#endif
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void Audio::stop()
 {
-#ifdef AUDIO_USE_RTAUDIO
-  try
+  if (m_stream != nullptr)
   {
-    m_audioDevice.stopStream();
+    Pa_StopStream(m_stream);
   }
-  catch (RtAudioError e)
-  {
-    throw std::runtime_error(e.getMessage());
-  }
-#else
-  if (m_stream == nullptr)
-  {
-    return;
-  }
-
-  PaError result = Pa_StopStream(m_stream);
-  if (result)
-  {
-    throw std::runtime_error("Could not stop Audio Stream. (" + std::to_string(result) + ")");
-  }
-#endif
 }
 
 // -------------------------------------------------------------------------------------------------

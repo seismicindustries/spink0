@@ -25,6 +25,10 @@ namespace
 // A timeline discontinuity larger than this between two consecutive audio buffers is counted as
 // a "beat jump" (it shows up as a stretched, shortened or doubled clock pulse at the outputs).
 const double kBeatJumpThresholdUs{1000.};
+
+// Not checked during the first seconds of audio: the host time filter (a linear regression over
+// the buffer timestamps) is still settling then and causes jumps of about 1 ms.
+const double kBeatJumpWarmupSeconds{2.};
 } // namespace
 
 // -------------------------------------------------------------------------------------------------
@@ -38,6 +42,7 @@ Engine::Engine(Link& link)
   , m_timeAtLastClick{}
   , m_timeAtLastReset{}
   , m_phase(0.)
+  , m_samplesProcessed(0.)
   , m_hasExpectedBeat(false)
   , m_expectedBeat(0.)
   , m_expectedBeatQuantum(0.)
@@ -227,7 +232,9 @@ void Engine::process(const std::chrono::microseconds hostTime, const std::size_t
     const auto bufferEnd = hostTime + std::chrono::microseconds(llround(numSamples * microsPerSample));
     const bool deliberateChange = engineData.resetBeatTime || engineData.requestedTempo > 0
                                   || engineData.quantum != m_expectedBeatQuantum;
-    if (m_hasExpectedBeat && !deliberateChange)
+    const bool warmingUp = m_samplesProcessed < kBeatJumpWarmupSeconds * m_sampleRate;
+    m_samplesProcessed += static_cast<double>(numSamples);
+    if (m_hasExpectedBeat && !deliberateChange && !warmingUp)
     {
       const auto beatAtBegin = timeline.beatAtTime(hostTime, engineData.quantum);
       const auto jumpUs = (beatAtBegin - m_expectedBeat) * 60e6 / timeline.tempo();

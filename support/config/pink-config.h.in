@@ -5,6 +5,10 @@
         ##      ##
 ##########      ############################################################# shaduzlabs.com #####*/
 
+#pragma once
+
 #define PINK_VERSION_MAJOR @PINK_VERSION_MAJOR@
 #define PINK_VERSION_MINOR @PINK_VERSION_MINOR@
 #define PINK_VERSION_MICRO @PINK_VERSION_MICRO@
+#define PINK_VERSION_STRING "@PINK_VERSION_STRING@"
+#define PINK_GIT_REVISION "@PINK_GIT_REVISION@"

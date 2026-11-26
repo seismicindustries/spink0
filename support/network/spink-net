@@ -1,0 +1,434 @@
+#!/usr/bin/env python3
+"""spink0 network control: WLAN mode switching (NetworkManager) and the setup page.
+
+  spink-net status          print the WLAN mode: AP, NET (connected as client) or ----
+  spink-net ap | client     switch mode, then print the new mode
+  spink-net toggle          AP -> client, anything else -> AP (encoder button, held 3 s)
+  spink-net daemon          setup page + JSON API on port 80, falls back to AP mode when no
+                            known network is connected (run by spink-netd.service)
+
+All NetworkManager calls go through nmcli with an argument list, never through a shell.
+Changes (networks, mode) are only accepted while the module is in access point mode, so nobody on
+a venue network can reconfigure it. Standard library only.
+"""
+
+import argparse
+import fcntl
+import json
+import os
+import subprocess
+import sys
+import threading
+import time
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import unquote, urlparse
+
+AP_CONNECTION = os.environ.get("SPINK_AP_CONNECTION", "spink-ap")
+IFACE = os.environ.get("SPINK_WLAN_IFACE", "wlan0")
+HTTP_PORT = int(os.environ.get("SPINK_HTTP_PORT", "80"))
+WWW_DIR = Path(os.environ.get("SPINK_WWW_DIR", "/usr/local/share/spink/www"))
+STATUS_FILE = Path(os.environ.get("PINK_STATUS_FILE", "/run/spink/status.json"))
+LOCK_FILE = Path(os.environ.get("SPINK_LOCK_FILE", "/run/spink/net.lock"))
+
+BOOT_GRACE_S = 60      # after start, give NetworkManager this long to join a known network
+FALLBACK_AFTER_S = 60  # not connected for this long -> start the access point
+CONNECT_TIMEOUT_S = 30
+MAX_BODY = 4096
+
+MODE_AP, MODE_CLIENT, MODE_NONE = "AP", "NET", "----"
+
+
+# NetworkManager ---------------------------------------------------------------------------------
+
+
+class NmcliError(RuntimeError):
+    pass
+
+
+def nmcli(*args, timeout=CONNECT_TIMEOUT_S + 15):
+    try:
+        result = subprocess.run(
+            ["nmcli", *args], capture_output=True, text=True, timeout=timeout, check=False
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise NmcliError(f"nmcli {args[0] if args else ''}: {e}") from e
+    if result.returncode != 0:
+        raise NmcliError(result.stderr.strip() or f"nmcli failed ({result.returncode})")
+    return result.stdout
+
+
+def split_terse(line):
+    """Split one line of `nmcli -t` output (':' separated, '\\:' escaped)."""
+    fields, current, escaped = [], "", False
+    for c in line:
+        if escaped:
+            current += c
+            escaped = False
+        elif c == "\\":
+            escaped = True
+        elif c == ":":
+            fields.append(current)
+            current = ""
+        else:
+            current += c
+    fields.append(current)
+    return fields
+
+
+def active_connection():
+    """Name of the connection active on the WLAN interface, or None."""
+    for line in nmcli("-t", "-f", "NAME,DEVICE", "connection", "show", "--active").splitlines():
+        fields = split_terse(line)
+        if len(fields) >= 2 and fields[1] == IFACE:
+            return fields[0]
+    return None
+
+
+def current_mode():
+    try:
+        name = active_connection()
+    except NmcliError:
+        return MODE_NONE
+    if name == AP_CONNECTION:
+        return MODE_AP
+    return MODE_CLIENT if name else MODE_NONE
+
+
+def ip_address():
+    try:
+        out = nmcli("-t", "-f", "IP4.ADDRESS", "device", "show", IFACE)
+    except NmcliError:
+        return None
+    for line in out.splitlines():
+        fields = split_terse(line)
+        if len(fields) >= 2 and fields[1]:
+            return fields[1].split("/")[0]
+    return None
+
+
+def connection_ssid(name):
+    try:
+        out = nmcli("-t", "-f", "802-11-wireless.ssid", "connection", "show", name)
+    except NmcliError:
+        return None
+    for line in out.splitlines():
+        fields = split_terse(line)
+        if len(fields) >= 2 and fields[0] == "802-11-wireless.ssid":
+            return fields[1] or None
+    return None
+
+
+def saved_networks():
+    """Saved WLAN client connections (everything but the access point)."""
+    networks = []
+    out = nmcli("-t", "-f", "NAME,TYPE", "connection", "show")
+    for line in out.splitlines():
+        fields = split_terse(line)
+        if len(fields) >= 2 and fields[1] == "802-11-wireless" and fields[0] != AP_CONNECTION:
+            networks.append(fields[0])
+    return sorted(networks, key=str.lower)
+
+
+def scan_networks():
+    """Visible networks, strongest first. In AP mode this is usually the cached list."""
+    seen = {}
+    out = nmcli("-t", "-f", "SSID,SIGNAL,SECURITY", "device", "wifi", "list", "ifname", IFACE)
+    for line in out.splitlines():
+        fields = split_terse(line)
+        if len(fields) < 3 or not fields[0]:
+            continue
+        ssid, signal, security = fields[0], int(fields[1] or 0), fields[2]
+        if ssid not in seen or seen[ssid]["signal"] < signal:
+            seen[ssid] = {"ssid": ssid, "signal": signal, "secure": security not in ("", "--")}
+    return sorted(seen.values(), key=lambda n: -n["signal"])
+
+
+def add_network(ssid, password):
+    if ssid in saved_networks():
+        nmcli("connection", "delete", ssid)  # replace: simplest way to change the password
+    args = ["connection", "add", "type", "wifi", "ifname", IFACE, "con-name", ssid,
+            "ssid", ssid, "connection.autoconnect", "yes"]
+    if password:
+        args += ["802-11-wireless-security.key-mgmt", "wpa-psk",
+                 "802-11-wireless-security.psk", password]
+    nmcli(*args)
+
+
+def remove_network(name):
+    if name not in saved_networks():
+        raise NmcliError(f"unknown network: {name}")
+    nmcli("connection", "delete", name)
+
+
+class SwitchLock:
+    """Serializes mode switches between the daemon and the CLI (called by pinkd)."""
+
+    def __enter__(self):
+        LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+        self.f = open(LOCK_FILE, "w")
+        fcntl.flock(self.f, fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, *exc):
+        fcntl.flock(self.f, fcntl.LOCK_UN)
+        self.f.close()
+
+
+def switch_to_ap():
+    with SwitchLock():
+        nmcli("connection", "up", AP_CONNECTION)
+    return current_mode()
+
+
+def switch_to_client():
+    with SwitchLock():
+        try:
+            nmcli("connection", "down", AP_CONNECTION, timeout=15)
+        except NmcliError:
+            pass  # was not active
+        try:
+            nmcli("device", "wifi", "rescan", "ifname", IFACE, timeout=15)
+        except NmcliError:
+            pass  # scanning right after the AP went down may be refused, connect anyway
+        try:
+            # joins the best available saved network (autoconnect profiles)
+            nmcli("device", "connect", IFACE, timeout=CONNECT_TIMEOUT_S + 5)
+        except NmcliError:
+            pass
+        deadline = time.monotonic() + CONNECT_TIMEOUT_S
+        while time.monotonic() < deadline and current_mode() == MODE_NONE:
+            time.sleep(1)
+    return current_mode()
+
+
+def toggle():
+    return switch_to_client() if current_mode() == MODE_AP else switch_to_ap()
+
+
+# Daemon -----------------------------------------------------------------------------------------
+
+
+def log(message):
+    print(message, flush=True)  # stdout goes to the journal (journalctl -u spink-netd)
+
+
+def fallback_loop():
+    """Start the access point if no network is connected for a while, so the module never ends up
+    unreachable. Once the AP is up it stays until the user switches (button or setup page)."""
+    time.sleep(BOOT_GRACE_S)
+    unconnected_since = None
+    while True:
+        mode = current_mode()
+        if mode == MODE_NONE:
+            unconnected_since = unconnected_since or time.monotonic()
+            if time.monotonic() - unconnected_since >= FALLBACK_AFTER_S:
+                log("no WLAN connection, starting the access point")
+                try:
+                    switch_to_ap()
+                except NmcliError as e:
+                    log(f"cannot start the access point: {e}")
+                unconnected_since = None
+        else:
+            unconnected_since = None
+        time.sleep(10)
+
+
+def read_daemon_status():
+    try:
+        return json.loads(STATUS_FILE.read_text())
+    except (OSError, ValueError):
+        return None
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "spink-netd"
+
+    # helpers ------------------------------------------------------------------
+
+    def send_json(self, data, status=HTTPStatus.OK):
+        body = json.dumps(data).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_error_json(self, message, status=HTTPStatus.BAD_REQUEST):
+        self.send_json({"error": message}, status)
+
+    def read_json(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        if length <= 0 or length > MAX_BODY:
+            raise ValueError("bad request size")
+        return json.loads(self.rfile.read(length))
+
+    def require_ap_mode(self):
+        if current_mode() != MODE_AP:
+            self.send_error_json(
+                "Changes are only possible in access point mode "
+                "(hold the encoder button for 3 s).", HTTPStatus.FORBIDDEN)
+            return False
+        return True
+
+    def redirect_home(self):
+        host = ip_address() or "10.42.0.1"
+        self.send_response(HTTPStatus.FOUND)
+        self.send_header("Location", f"http://{host}/")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def log_message(self, fmt, *args):
+        pass  # keep the journal quiet
+
+    # routes -------------------------------------------------------------------
+
+    def do_GET(self):
+        path = urlparse(self.path).path
+        if path in ("/", "/index.html"):
+            self.serve_page()
+        elif path == "/api/status":
+            mode = current_mode()
+            try:
+                connection = active_connection()
+            except NmcliError:
+                connection = None
+            self.send_json({
+                "network": {
+                    "mode": mode,
+                    "connection": connection,
+                    "ssid": connection_ssid(connection) if connection else None,
+                    "ip": ip_address(),
+                },
+                "daemon": read_daemon_status(),
+                "canEdit": mode == MODE_AP,
+            })
+        elif path == "/api/networks":
+            try:
+                self.send_json({"saved": saved_networks()})
+            except NmcliError as e:
+                self.send_error_json(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+        elif path == "/api/scan":
+            try:
+                self.send_json({"visible": scan_networks()})
+            except NmcliError as e:
+                self.send_error_json(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+        else:
+            self.redirect_home()  # captive portal: phones open the setup page by themselves
+
+    def do_POST(self):
+        path = urlparse(self.path).path
+        if path not in ("/api/networks", "/api/mode"):
+            self.send_error_json("not found", HTTPStatus.NOT_FOUND)
+            return
+        try:
+            data = self.read_json()
+        except ValueError:
+            self.send_error_json("invalid JSON")
+            return
+        if not self.require_ap_mode():
+            return
+
+        if path == "/api/networks":
+            ssid = str(data.get("ssid", ""))
+            password = str(data.get("password", ""))
+            if not 1 <= len(ssid.encode()) <= 32 or ssid == AP_CONNECTION:
+                self.send_error_json("The network name must be 1 to 32 bytes long.")
+                return
+            if password and not 8 <= len(password) <= 63:
+                self.send_error_json("The password must be 8 to 63 characters (or empty).")
+                return
+            try:
+                add_network(ssid, password)
+            except NmcliError as e:
+                self.send_error_json(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            log(f"network saved: {ssid}")
+            self.send_json({"saved": saved_networks()})
+
+        else:  # /api/mode
+            mode = data.get("mode")
+            if mode not in ("ap", "client"):
+                self.send_error_json("mode must be 'ap' or 'client'")
+                return
+            # Answer first: leaving AP mode drops this very connection.
+            self.send_json({"switching": mode})
+            target = switch_to_ap if mode == "ap" else switch_to_client
+
+            def later():
+                time.sleep(1)
+                try:
+                    log(f"mode -> {target()}")
+                except NmcliError as e:
+                    log(f"mode switch failed: {e}")
+
+            threading.Thread(target=later, daemon=True).start()
+
+    def do_DELETE(self):
+        path = urlparse(self.path).path
+        prefix = "/api/networks/"
+        if not path.startswith(prefix):
+            self.send_error_json("not found", HTTPStatus.NOT_FOUND)
+            return
+        if not self.require_ap_mode():
+            return
+        name = unquote(path[len(prefix):])
+        try:
+            remove_network(name)
+        except NmcliError as e:
+            self.send_error_json(str(e))
+            return
+        log(f"network removed: {name}")
+        self.send_json({"saved": saved_networks()})
+
+    def serve_page(self):
+        try:
+            body = (WWW_DIR / "index.html").read_bytes()
+        except OSError:
+            self.send_error_json("setup page not installed", HTTPStatus.NOT_FOUND)
+            return
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+
+def run_daemon():
+    threading.Thread(target=fallback_loop, daemon=True).start()
+    server = ThreadingHTTPServer(("", HTTP_PORT), Handler)
+    server.daemon_threads = True
+    log(f"setup page on port {HTTP_PORT}, WLAN mode {current_mode()}")
+    server.serve_forever()
+
+
+# CLI --------------------------------------------------------------------------------------------
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("command", choices=["status", "ap", "client", "toggle", "daemon"])
+    command = parser.parse_args().command
+
+    if command == "daemon":
+        run_daemon()
+        return 0
+    try:
+        mode = {
+            "status": current_mode,
+            "ap": switch_to_ap,
+            "client": switch_to_client,
+            "toggle": toggle,
+        }[command]()
+    except NmcliError as e:
+        print(e, file=sys.stderr)
+        return 1
+    print(mode)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

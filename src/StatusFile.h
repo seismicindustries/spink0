@@ -7,15 +7,9 @@
 
 #pragma once
 
-#include "ui/UserInterface.h"
-
-#include <nmws/WebSocketServer.hpp>
-
-#include <future>
-#include <mutex>
 #include <string>
-#include <thread>
 
+#include "Pink.h"
 
 // -------------------------------------------------------------------------------------------------
 
@@ -26,26 +20,24 @@ namespace pi
 
 // -------------------------------------------------------------------------------------------------
 
-class UserInterfaceWebSocket : public UserInterface
+//! Publishes the daemon state as JSON for the setup page (spink-netd), written atomically
+//! (temp file + rename). Default path /run/spink/status.json, $PINK_STATUS_FILE overrides it.
+class StatusFile
 {
 public:
-  UserInterfaceWebSocket(std::shared_ptr<Pink> /*pink_*/);
-  ~UserInterfaceWebSocket() override;
+  StatusFile(std::string audioDescription_);
 
-  void statusChanged(bool /*enabled_*/) override;
+  //! Returns false if the file could not be written (e.g. the directory does not exist).
+  bool write(const Pink& pink_);
 
-  void tempoChanged(double /*t_*/) override;
-  void loopLengthChanged(double /*t_*/) override;
-
-  void numPeersChanged(std::size_t /*n_*/) override;
-  void runStatusChanged(bool /*playing_*/) override;
-
-  void clockMultiplierChanged(const std::string& /*cm_*/) override;
+  const std::string& path() const
+  {
+    return m_path;
+  }
 
 private:
-  void onMessageReceived(std::string /*message_*/);
-
-  nmws::WebSocketServer m_wsServer;
+  std::string m_path;
+  std::string m_audioDescription;
 };
 
 // -------------------------------------------------------------------------------------------------

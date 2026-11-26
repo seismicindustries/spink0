@@ -7,18 +7,14 @@
 
 #pragma once
 
-#include "Engine.h"
-#include <ableton/platforms/Config.hpp>
-#include <ableton/link/HostTimeFilter.hpp>
+#include <string>
 
-#ifdef AUDIO_USE_RTAUDIO
-#include <RtAudio.h>
-#else
+#include <ableton/link/HostTimeFilter.hpp>
+#include <ableton/platforms/Config.hpp>
 #include <portaudio.h>
-#ifdef __linux__
-#include <pa_linux_alsa.h>
-#endif
-#endif
+
+#include "Engine.h"
+
 // -------------------------------------------------------------------------------------------------
 
 namespace sl
@@ -28,11 +24,19 @@ namespace pi
 
 // -------------------------------------------------------------------------------------------------
 
+//! Renders the clock (right channel) and reset (left channel) signals through PortAudio. On the
+//! spink0 these are the Pi's PWM audio pins (GPIO18 / GPIO13), buffered by the op-amp stage.
 class Audio
 {
 public:
-  Audio(ableton::Link& link);
+  //! Output device: the first one whose name contains $PINK_AUDIO_DEVICE if set, otherwise the
+  //! Pi's PWM output ("Headphones"), otherwise the default output device.
+  explicit Audio(ableton::Link& link);
   ~Audio();
+
+  Audio(const Audio&) = delete;
+  Audio& operator=(const Audio&) = delete;
+
   Engine& engine()
   {
     return m_engine;
@@ -42,22 +46,19 @@ public:
     return m_engine;
   }
 
+  //! "<device name> @ <rate> Hz, latency <n> ms", for the log.
+  const std::string& description() const
+  {
+    return m_description;
+  }
+
 private:
-#ifdef AUDIO_USE_RTAUDIO
-  static int audioCallbackRTA(void* outputBuffer,
-    void* inputBuffer,
-    unsigned int nBufferFrames,
-    double streamTime,
-    RtAudioStreamStatus status,
-    void* userData);
-#else
-  static int audioCallbackPA(const void* inputBuffer,
+  static int audioCallback(const void* inputBuffer,
     void* outputBuffer,
     unsigned long inNumFrames,
     const PaStreamCallbackTimeInfo* timeInfo,
     PaStreamCallbackFlags statusFlags,
     void* userData);
-#endif
 
   void initialize();
   void uninitialize();
@@ -68,14 +69,8 @@ private:
 
   Engine m_engine;
   double m_sampleTime;
-
-#ifdef AUDIO_USE_RTAUDIO
-  RtAudio m_audioDevice;
-  unsigned m_audioBufferSize;
-  RtAudio::StreamParameters m_audioStreamParameters;
-#else
   PaStream* m_stream;
-#endif
+  std::string m_description;
 };
 
 // -------------------------------------------------------------------------------------------------

@@ -103,6 +103,7 @@ private:
   mutable std::mutex m_engineDataGuard;
 
   // timeline continuity check (audio thread only)
+  double m_samplesProcessed;
   bool m_hasExpectedBeat;
   double m_expectedBeat;
   double m_expectedBeatQuantum;
