@@ -67,6 +67,7 @@ echo ""
 echo ""
 echo ""
 echo -e "[ \033[1m\033[96mpink\033[m ] Update submodules -----------------------------------------------------"
+git submodule sync --recursive
 git submodule update --init --recursive
 
 echo ""
@@ -123,7 +124,7 @@ echo -e "[ \033[1m\033[96mpink\033[m ] Build pink and install the binary and the
 rm -rf build
 mkdir build
 cd build
-if [ $1 == "no-ui" ]
+if [ "$1" == "no-ui" ]
   then
     cmake -DCMAKE_BUILD_TYPE=Release -DUSE_PI_ZERO=OFF -DUSE_WEBSOCKET=ON -DJUST_INSTALL_CEREAL=ON ..
   else
