@@ -183,7 +183,6 @@ UserInterfacePiZero* pInstance;
 
 UserInterfacePiZero::UserInterfacePiZero(std::shared_ptr<Pink> pink_)
   : UserInterface(pink_)
-  , m_threadDisplay(&UserInterfacePiZero::hardwareIO, this)
   , m_displayState(DisplayState::tempo)
   , m_lastEncoderValue(0)
 {
@@ -228,11 +227,17 @@ UserInterfacePiZero::UserInterfacePiZero(std::shared_ptr<Pink> pink_)
   pinModeAlt(kPinPWM1, 2); // ALT5
   pinModeAlt(kPinPWM2, 4); // ALT0
 
-  m_engineTempo = m_pink->tempo();
-  m_engineLoopLength = m_pink->loopLength();
-  m_engineClockMultiplier = m_pink->clockMultiplierLabel();
+  {
+    std::lock_guard<std::mutex> lock(m_mtxState);
+    m_engineTempo = m_pink->tempo();
+    m_engineLoopLength = m_pink->loopLength();
+    m_engineClockMultiplier = m_pink->clockMultiplierLabel();
+  }
 
   registerCallbacks();
+
+  // Only now that wiringPi and all pins are set up may the display thread start writing to GPIO.
+  m_threadDisplay = std::thread(&UserInterfacePiZero::hardwareIO, this);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -250,7 +255,10 @@ UserInterfacePiZero::~UserInterfacePiZero()
 
 void UserInterfacePiZero::tempoChanged(double t_)
 {
-  m_engineTempo = t_;
+  {
+    std::lock_guard<std::mutex> lock(m_mtxState);
+    m_engineTempo = t_;
+  }
   m_updateUI.store(true);
 }
 
@@ -258,7 +266,10 @@ void UserInterfacePiZero::tempoChanged(double t_)
 
 void UserInterfacePiZero::loopLengthChanged(double l_)
 {
-  m_engineLoopLength = l_;
+  {
+    std::lock_guard<std::mutex> lock(m_mtxState);
+    m_engineLoopLength = l_;
+  }
   m_updateUI.store(true);
 }
 
@@ -266,7 +277,10 @@ void UserInterfacePiZero::loopLengthChanged(double l_)
 
 void UserInterfacePiZero::numPeersChanged(std::size_t n_)
 {
-  m_numPeers = n_;
+  {
+    std::lock_guard<std::mutex> lock(m_mtxState);
+    m_numPeers = n_;
+  }
   m_updateUI.store(true);
 }
 
@@ -282,7 +296,10 @@ void UserInterfacePiZero::runStatusChanged(bool playing_)
 
 void UserInterfacePiZero::clockMultiplierChanged(const std::string& cm_)
 {
-  m_engineClockMultiplier = cm_;
+  {
+    std::lock_guard<std::mutex> lock(m_mtxState);
+    m_engineClockMultiplier = cm_;
+  }
   m_updateUI.store(true);
 }
 
@@ -374,8 +391,7 @@ void UserInterfacePiZero::registerCallbacks()
 {
   onEncoderChanged([this](bool clockwise_, bool buttonPressed_) {
 
-
-    switch (m_displayState)
+    switch (m_displayState.load())
     {
       case DisplayState::tempo:
       {
@@ -426,21 +442,21 @@ void UserInterfacePiZero::registerCallbacks()
 
   onEncoderButtonPressed([this]() {
 
-    if (m_displayState == DisplayState::tempo)
+    switch (m_displayState.load())
     {
-      m_displayState = DisplayState::length;
-    }
-    else if (m_displayState == DisplayState::length)
-    {
-      m_displayState = DisplayState::ppqn;
-    }
-    else if (m_displayState == DisplayState::ppqn)
-    {
-      m_displayState = DisplayState::peers;
-    }
-    else if (m_displayState == DisplayState::peers)
-    {
-      m_displayState = DisplayState::tempo;
+      case DisplayState::tempo:
+        m_displayState = DisplayState::length;
+        break;
+      case DisplayState::length:
+        m_displayState = DisplayState::ppqn;
+        break;
+      case DisplayState::ppqn:
+        m_displayState = DisplayState::peers;
+        break;
+      case DisplayState::peers:
+      default:
+        m_displayState = DisplayState::tempo;
+        break;
     }
     m_updateUI.store(true);
 
@@ -455,19 +471,25 @@ void UserInterfacePiZero::hardwareIO()
 
   while (m_running)
   {
-    bool expected = true;
-    if (!m_updateUI.compare_exchange_strong(expected, false))
+    // Recompute LEDs/text only when something changed. (The old check was inverted and ran
+    // updateUI() on nearly every 500us pass, ~2000 times per second.)
+    if (m_updateUI.exchange(false))
     {
       updateUI();
     }
-    std::string displayString;
+
+    char digitChar = ' ';
+    bool showDot = false;
     {
       std::lock_guard<std::mutex> lock(m_mtxDisplay);
-      displayString = m_displayString;
+      if (currentDigit < m_displayString.size())
+      {
+        digitChar = m_displayString[currentDigit];
+      }
+      showDot = m_displayShowDot && currentDigit == 2;
     }
 
-    writeToDisplay(
-      currentDigit, m_displayString[currentDigit], m_displayShowDot && currentDigit == 2);
+    writeToDisplay(currentDigit, digitChar, showDot);
     currentDigit = (currentDigit + 1) % kDisplayNumDigits;
 
 
@@ -479,16 +501,29 @@ void UserInterfacePiZero::hardwareIO()
 
 void UserInterfacePiZero::updateUI()
 {
+  // Snapshot the shared state, then format without holding the lock.
+  double engineTempo;
+  double engineLoopLength;
+  std::string engineClockMultiplier;
+  std::size_t numPeers;
+  {
+    std::lock_guard<std::mutex> lock(m_mtxState);
+    engineTempo = m_engineTempo;
+    engineLoopLength = m_engineLoopLength;
+    engineClockMultiplier = m_engineClockMultiplier;
+    numPeers = m_numPeers;
+  }
+
   setLed(Led::running, m_engineRunning);
 
-  switch (m_displayState)
+  switch (m_displayState.load())
   {
     case DisplayState::tempo:
     {
       setLed(Led::tempo, true);
       setLed(Led::length, false);
       setLed(Led::ppqn, false);
-      display(m_engineTempo);
+      display(engineTempo);
       break;
     }
     case DisplayState::length:
@@ -496,7 +531,7 @@ void UserInterfacePiZero::updateUI()
       setLed(Led::tempo, false);
       setLed(Led::length, true);
       setLed(Led::ppqn, false);
-      display(m_engineLoopLength);
+      display(engineLoopLength);
       break;
     }
     case DisplayState::ppqn:
@@ -505,7 +540,7 @@ void UserInterfacePiZero::updateUI()
       setLed(Led::length, false);
       setLed(Led::ppqn, true);
 
-      display(m_engineClockMultiplier);
+      display(engineClockMultiplier);
       break;
     }
     case DisplayState::peers:
@@ -514,7 +549,7 @@ void UserInterfacePiZero::updateUI()
       setLed(Led::length, false);
       setLed(Led::ppqn, false);
       std::stringstream ss;
-      ss << m_numPeers << "P";
+      ss << numPeers << "P";
       display(ss.str());
       break;
     }
@@ -561,6 +596,7 @@ void UserInterfacePiZero::setLed(Led led_, bool state_)
 
 void UserInterfacePiZero::encoderHandler()
 {
+  std::lock_guard<std::mutex> lock(pInstance->m_mtxEncoder);
   int msb = digitalRead(kPinEncoderA);
   int lsb = digitalRead(kPinEncoderB);
   int encoded = (msb << 1) | lsb;

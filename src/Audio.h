@@ -15,6 +15,9 @@
 #include <RtAudio.h>
 #else
 #include <portaudio.h>
+#ifdef __linux__
+#include <pa_linux_alsa.h>
+#endif
 #endif
 // -------------------------------------------------------------------------------------------------
 
@@ -31,6 +34,10 @@ public:
   Audio(ableton::Link& link);
   ~Audio();
   Engine& engine()
+  {
+    return m_engine;
+  }
+  const Engine& engine() const
   {
     return m_engine;
   }

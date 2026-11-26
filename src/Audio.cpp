@@ -7,6 +7,7 @@
 
 #include "Audio.h"
 
+#include <algorithm>
 #include <chrono>
 #include <stdexcept>
 
@@ -73,22 +74,29 @@ int Audio::audioCallbackRTA(void* outputBuffer,
   Audio& platform = *static_cast<Audio*>(userData);
   Engine& engine = platform.m_engine;
 
+  if (status & RTAUDIO_OUTPUT_UNDERFLOW)
+  {
+    engine.noteUnderrun();
+  }
+
   const auto hostTime = platform.m_hostTimeFilter.sampleTimeToHostTime(platform.m_sampleTime);
 
   platform.m_sampleTime += nBufferFrames;
 
   const auto bufferBeginAtOutput = hostTime + engine.outputLatency();
 
-  engine.process(bufferBeginAtOutput, nBufferFrames);
+  // Never render more than the engine buffers hold (they are sized from the negotiated buffer
+  // size in initialize(), this is only a safety net).
+  const std::size_t numFrames = std::min<std::size_t>(nBufferFrames, engine.bufferSize());
+  engine.process(bufferBeginAtOutput, numFrames);
 
   const auto& bufferReset = engine.bufferReset();
   const auto& bufferClock = engine.bufferClock();
 
-  unsigned long i = 0;
-  for (; i < nBufferFrames; ++i)
+  for (std::size_t i = 0; i < nBufferFrames; ++i)
   {
-    buffer[i * 2] = bufferReset[i];
-    buffer[i * 2 + 1] = bufferClock[i];
+    buffer[i * 2] = i < numFrames ? static_cast<float>(bufferReset[i]) : 0.f;
+    buffer[i * 2 + 1] = i < numFrames ? static_cast<float>(bufferClock[i]) : 0.f;
   }
 
   return 0;
@@ -101,13 +109,18 @@ int Audio::audioCallbackPA(const void* /*inputBuffer*/,
   void* outputBuffer,
   unsigned long inNumFrames,
   const PaStreamCallbackTimeInfo* /*timeInfo*/,
-  PaStreamCallbackFlags /*statusFlags*/,
+  PaStreamCallbackFlags statusFlags,
   void* userData)
 {
   using namespace std::chrono;
   float* buffer = static_cast<float*>(outputBuffer);
   Audio& platform = *static_cast<Audio*>(userData);
   Engine& engine = platform.m_engine;
+
+  if (statusFlags & paOutputUnderflow)
+  {
+    engine.noteUnderrun();
+  }
 
   const auto hostTime = platform.m_hostTimeFilter.sampleTimeToHostTime(platform.m_sampleTime);
 
@@ -121,8 +134,8 @@ int Audio::audioCallbackPA(const void* /*inputBuffer*/,
   const auto& bufferClock = engine.bufferClock();
   for (unsigned long i = 0; i < inNumFrames; ++i)
   {
-    buffer[i * 2] = bufferReset[i];
-    buffer[i * 2 + 1] = bufferClock[i];
+    buffer[i * 2] = static_cast<float>(bufferReset[i]);
+    buffer[i * 2 + 1] = static_cast<float>(bufferClock[i]);
   }
 
   return paContinue;
@@ -152,8 +165,6 @@ void Audio::initialize()
     options.flags = RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_MINIMIZE_LATENCY | RTAUDIO_HOG_DEVICE;
     options.numberOfBuffers = 8;
 
-    RtAudio::DeviceInfo deviceInfo
-      = m_audioDevice.getDeviceInfo(m_audioDevice.getDefaultOutputDevice());
     m_audioDevice.openStream(&m_audioStreamParameters,
       NULL,
       RTAUDIO_FLOAT32,
@@ -162,6 +173,15 @@ void Audio::initialize()
       &Audio::audioCallbackRTA,
       this,
       &options);
+
+    // RtAudio may pick a different buffer size than requested: size the engine buffers to match,
+    // otherwise process() would write past their end.
+    m_engine.setBufferSize(std::max<std::size_t>(m_audioBufferSize, m_engine.bufferSize()));
+
+    // Compensate the real output latency (in frames), like the PortAudio path does.
+    const auto latencyFrames = m_audioDevice.getStreamLatency();
+    m_engine.setOutputLatency(
+      std::chrono::microseconds(llround(latencyFrames * 1.0e6 / m_engine.sampleRate())));
   }
   catch (RtAudioError e)
   {
@@ -206,6 +226,18 @@ void Audio::initialize()
   {
     throw std::runtime_error("No valid audio stream.");
   }
+
+  // Use the latency the stream actually got, not the one we suggested.
+  if (const PaStreamInfo* info = Pa_GetStreamInfo(m_stream))
+  {
+    m_engine.setOutputLatency(std::chrono::microseconds(llround(info->outputLatency * 1.0e6)));
+  }
+
+#ifdef __linux__
+  // Run the ALSA callback thread with SCHED_FIFO. Without this it competes with every other
+  // thread on the single-core Pi Zero. Needs root or an rtprio limit (the daemon runs as root).
+  PaAlsa_EnableRealtimeScheduling(m_stream, 1);
+#endif
 #endif
 }
 
