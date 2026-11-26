@@ -32,3 +32,16 @@
 *.exe
 *.out
 *.app
+
+# KiCad generated / temporary files
+*-backups/
+rescue-backup/
+fp-info-cache
+*.lck
+_autosave-*
+*-save.kicad_pcb
+*-save.kicad_sch
+DRC.rpt
+ERC.rpt
+*.kicad_pcb.bak
+*.kicad_sch.bak

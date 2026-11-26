@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 0)
+  (lib (name "pink0-rescue")(type "Legacy")(uri "${KIPRJMOD}/pink0-rescue.lib")(options "")(descr ""))
+  (lib (name "raffilibkicad")(type "Legacy")(uri "/Users/raffi/Documents/Projects_Electronix/seismic_industries/008b_KICAD/001_libraries/raffilibkicad/raffilibkicad.lib")(options "")(descr ""))
+)
