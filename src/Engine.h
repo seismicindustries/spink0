@@ -69,6 +69,10 @@ public:
   //! Any thread.
   Diagnostics diagnostics() const;
 
+  //! Any thread. Incremented by the audio thread each time it applies a start, i.e. when beat 0
+  //! (the start of the clock outputs) has been placed on the timeline.
+  std::uint32_t startGeneration() const;
+
 private:
   struct Data
   {
@@ -106,6 +110,7 @@ private:
   std::atomic<std::uint32_t> m_underruns;
   std::atomic<std::uint32_t> m_beatJumps;
   std::atomic<std::int32_t> m_lastBeatJumpUs;
+  std::atomic<std::uint32_t> m_startGeneration;
 };
 
 // -------------------------------------------------------------------------------------------------

@@ -162,6 +162,8 @@ set(
     src/Engine.cpp
     src/Engine.h
     src/main.cpp
+    src/MidiOut.cpp
+    src/MidiOut.h
     src/Pink.cpp
     src/Pink.h
 )

@@ -18,6 +18,7 @@
 #include <ableton/Link.hpp>
 
 #include "Audio.h"
+#include "MidiOut.h"
 
 // -------------------------------------------------------------------------------------------------
 
@@ -111,6 +112,7 @@ private:
 
   ableton::Link m_link;
   Audio m_audio;
+  MidiOut m_midiOut; // after m_audio: needs its engine, and is destroyed before it
 
   Listeners m_listeners;
 };

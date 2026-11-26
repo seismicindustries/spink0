@@ -51,7 +51,10 @@ web socket UI (`support/html/pink.php`).
 6. installs the WLAN mode switch service (`/opt/si/modeswitch/wlan-mode.sh`,
    `wlan-mode.service`),
 7. copies `support/hostapd.conf` and the web pages to `/var/www/html`,
-8. sets `force_turbo=1` in `config.txt` and enables `wifi-powersave-off.service`.
+8. sets `force_turbo=1` in `config.txt` and enables `wifi-powersave-off.service`,
+9. sets up the UART for MIDI out: `enable_uart=1`, `dtoverlay=disable-bt`,
+   `dtoverlay=midi-uart0` in `config.txt`, removes the serial console from `cmdline.txt`
+   (backup: `cmdline.txt.bak`) and disables `hciuart`. Bluetooth is not available afterwards.
 
 ### Manual build
 
@@ -84,6 +87,25 @@ been tested recently (Homebrew on Apple Silicon installs to `/opt/homebrew` inst
 - Run in the foreground for debugging: `sudo /usr/sbin/pinkd no-daemon`
 - Logs go to syslog under the tag `pinkd`: `journalctl -t pinkd -f`. Audio underruns,
   timeline jumps, Link peer changes and start/stop are logged there.
+
+### MIDI out
+
+The MIDI OUT jack sends MIDI clock (24 per beat) locked to the Link session:
+
+- clock runs continuously, also while stopped, so connected devices follow the tempo,
+- **Start** right before the clock tick on beat 0, the same point where the CV clock and reset
+  outputs start (run button),
+- **Stop** when the run button stops the clock,
+- if a start comes too late for beat 0, **Song Position Pointer + Continue** on the next 16th,
+  so devices still lock in phase.
+
+MIDI clock is always 24 per beat; the clock multiplier only affects the CV clock output.
+
+Hardware: solder jumpers J5/J6 route GPIO14 to the MIDI driver (and GPIO20 to the tempo LED),
+J2/J3 select TRS type A or B for the 3.5 mm jack.
+
+`pinkd` opens `/dev/serial0` at "38400" baud, which `dtoverlay=midi-uart0` turns into 31250.
+Without that setup (or on a desktop build) MIDI out is disabled and a warning is logged.
 
 ### WLAN modes
 

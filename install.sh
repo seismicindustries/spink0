@@ -182,6 +182,17 @@ if [ $platform == "linux-rpi" ];
     sudo cp support/system/wifi-powersave-off.service /etc/systemd/system/.
     sudo systemctl daemon-reload
     sudo systemctl enable wifi-powersave-off.service
+
+    # MIDI out (GPIO14 = UART TX): the full UART (PL011) on GPIO14 instead of Bluetooth, 31250 baud
+    # via midi-uart0 (maps a requested 38400 to 31250), and no serial console on it.
+    grep -q '^enable_uart=1' $BOOTCFG || echo 'enable_uart=1' | sudo tee -a $BOOTCFG
+    BT_OVERLAY=disable-bt
+    [ -f "$(dirname $BOOTCFG)/overlays/disable-bt.dtbo" ] || BT_OVERLAY=pi3-disable-bt # Stretch
+    grep -q "^dtoverlay=$BT_OVERLAY" $BOOTCFG || echo "dtoverlay=$BT_OVERLAY" | sudo tee -a $BOOTCFG
+    grep -q '^dtoverlay=midi-uart0' $BOOTCFG || echo 'dtoverlay=midi-uart0' | sudo tee -a $BOOTCFG
+    CMDLINE=$(dirname $BOOTCFG)/cmdline.txt
+    sudo sed -i.bak -E 's/ ?console=(serial0|ttyAMA0|ttyS0),[0-9]+//g' $CMDLINE
+    sudo systemctl disable hciuart 2>/dev/null || true
 fi
 
 echo ""
