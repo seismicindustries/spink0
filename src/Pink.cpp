@@ -173,14 +173,14 @@ void Pink::togglePlay()
 
 // -------------------------------------------------------------------------------------------------
 
-bool Pink::isPlaying()
+bool Pink::isPlaying() const
 {
   return m_audio.engine().isPlaying();
 }
 
 // -------------------------------------------------------------------------------------------------
 
-double Pink::tempo()
+double Pink::tempo() const
 {
   return m_audio.engine().tempo();
 }
@@ -225,7 +225,7 @@ void Pink::notifyListeners(const std::function<void(Listener&)>& fn_)
 
 // -------------------------------------------------------------------------------------------------
 
-double Pink::loopLength()
+double Pink::loopLength() const
 {
   return m_audio.engine().quantum();
 }

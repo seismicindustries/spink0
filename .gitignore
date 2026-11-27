@@ -45,3 +45,7 @@ DRC.rpt
 ERC.rpt
 *.kicad_pcb.bak
 *.kicad_sch.bak
+
+# Python
+__pycache__/
+*.pyc

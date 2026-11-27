@@ -1,0 +1,15 @@
+[Unit]
+Description=spink0 network daemon (WLAN mode fallback, setup page on port 80)
+After=NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/spink-net daemon
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

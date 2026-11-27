@@ -27,17 +27,34 @@ public:
   using tCallbackEncoderChanged = std::function<void(bool, bool)>;
   using tCallbackButtonPressed = std::function<void()>;
 
-  UserInterface(std::shared_ptr<Pink> pink_) : m_pink(pink_)
+  explicit UserInterface(std::shared_ptr<Pink> pink_) : m_pink(std::move(pink_))
   {
-    m_pink->addListener(pinkListenerId(), this);
   }
 
   ~UserInterface() override
   {
-    m_pink->removeListener(pinkListenerId());
+    stopListening();
   }
 
 protected:
+  //! Derived classes call this at the end of their constructor: Pink callbacks arrive on other
+  //! threads and must not reach a half-constructed object.
+  void startListening()
+  {
+    m_pink->addListener(pinkListenerId(), this);
+    m_listening = true;
+  }
+
+  //! Derived classes call this first in their destructor, before their members go away.
+  void stopListening()
+  {
+    if (m_listening)
+    {
+      m_pink->removeListener(pinkListenerId());
+      m_listening = false;
+    }
+  }
+
   void onEncoderChanged(tCallbackEncoderChanged fnEncoderChanged_)
   {
     m_cbEncoderChanged = std::move(fnEncoderChanged_);
@@ -81,6 +98,7 @@ protected:
 
 
 private:
+  bool m_listening{false};
   tCallbackEncoderChanged m_cbEncoderChanged;
   tCallbackButtonPressed m_cbRunButtonPressed;
   tCallbackButtonPressed m_cbEncoderButtonPressed;

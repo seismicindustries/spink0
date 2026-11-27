@@ -1,0 +1,28 @@
+[Unit]
+Description=spink0 Ableton Link clock daemon (pinkd)
+After=sound.target network.target
+Wants=network.target
+
+[Service]
+Type=simple
+# Route the PWM audio channels to the clock/reset output pins: GPIO18 = PWM0 (ALT5, reset),
+# GPIO13 = PWM1 (ALT0, clock). The leading "-" keeps pinkd starting (MIDI, Link) if pinctrl fails.
+ExecStartPre=-/usr/bin/pinctrl set 18 a5
+ExecStartPre=-/usr/bin/pinctrl set 13 a0
+# full level on the PWM outputs (the op-amp stage expects it)
+ExecStartPre=-/usr/bin/amixer -q -c Headphones sset PCM 100%
+ExecStart=/usr/local/bin/pinkd
+Restart=always
+RestartSec=2
+# /run/spink/status.json is read by the setup page (spink-netd)
+RuntimeDirectory=spink
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+# realtime audio and MIDI threads
+LimitRTPRIO=99
+LimitMEMLOCK=infinity
+# Audio device override (substring of the PortAudio device name), default: "Headphones"
+#Environment=PINK_AUDIO_DEVICE=Headphones
+
+[Install]
+WantedBy=multi-user.target

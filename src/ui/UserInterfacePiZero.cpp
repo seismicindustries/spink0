@@ -10,158 +10,47 @@
 #include <cmath>
 #include <sstream>
 
-#ifdef __arm__
-#include <wiringPi.h>
-#else
-#include <iostream>
-#endif
-
 // -------------------------------------------------------------------------------------------------
 
 namespace
 {
-const unsigned kPinLedLength{9};   // BCM 3
-const unsigned kPinLedTempo{28};   // BCM 20(wPI28) instead of 14 (wPI15) - raffi-luki
-const unsigned kPinLedPPQN{8};     // BCM 2
-const unsigned kPinLedRunning{11}; // BCM 7
 
-const unsigned kPinEncoderA{24};   // BCM 19
-const unsigned kPinEncoderB{27};   // BCM 16
-const unsigned kPinBtnEncoder{22}; // BCM 6
-const unsigned kPinBtnRun{21};     // BCM 5
+// All pins are BCM GPIO numbers (see the main board schematic).
 
-const unsigned kDisplayRefreshPeriodUs{500};
-unsigned kDisplayNumSegments{8};
-unsigned kDisplayNumDigits{4};
+// LEDs (active high), in the order of the Led enum
+const unsigned kPinLedTempo{20}; // was GPIO14, moved so GPIO14 (UART TX) can drive MIDI out
+const unsigned kPinLedLength{3};
+const unsigned kPinLedPPQN{2};
+const unsigned kPinLedRunning{7};
 
-const unsigned kPinDisplaySegments[] = {10 /*BCM8*/,
-  6 /*BCM25*/,
-  12 /*BCM10*/,
-  0 /*BCM17*/,
-  13 /*BCM9*/,
-  4 /*BCM23*/,
-  7 /*BCM4*/,
-  2 /*BCM27*/};
-const unsigned kPinDisplayDigits[] = {14 /*BCM11*/, 5 /*BCM24*/, 3 /*BCM22*/, 16 /*BCM15*/};
+// Inputs: pull-ups on the board / internal, all active low
+const unsigned kPinEncoderA{19};
+const unsigned kPinEncoderB{16};
+const unsigned kPinBtnEncoder{6};
+const unsigned kPinBtnRun{5};
+const unsigned kButtonDebounceUs{10000};
 
-const unsigned kPinPWM1{1};  // BCM 18
-const unsigned kPinPWM2{23}; // BCM 13
+// Display: segments a..g + dot (low = lit), digit selects (high = selected)
+const unsigned kDisplayNumSegments{8};
+const unsigned kDisplayNumDigits{4};
+const std::vector<unsigned> kPinsDisplay{
+  8, 25, 10, 17, 9, 23, 4, 27, // segments
+  11, 24, 22, 15,              // digits
+};
+
+const auto kDisplayRefreshPeriod = std::chrono::microseconds(500); // per digit
+const auto kInputPollTimeout = std::chrono::milliseconds(50);
+const auto kLongPressDuration = std::chrono::seconds(3);
+const auto kMessageDuration = std::chrono::seconds(3);
+const auto kSwitchingTimeout = std::chrono::seconds(60);
 
 const uint8_t kDisplayFontData[] = {
 #include "Font7Seg.h"
 };
+const unsigned kFontFirstChar{45};
+const unsigned kFontLastChar{90};
 
-// -------------------------------------------------------------------------------------------------
-
-#ifndef __arm__
-
-#define LOW 0
-#define HIGH 1
-#define INPUT 0
-#define OUTPUT 1
-#define PUD_OFF 0
-#define PUD_DOWN 1
-#define PUD_UP 2
-#define INT_EDGE_SETUP 0
-#define INT_EDGE_FALLING 1
-#define INT_EDGE_RISING 2
-#define INT_EDGE_BOTH 3
-
-void wiringPiSetup()
-{
-  std::cout << "wirintPiSetup()" << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void digitalWrite(int pin_, int value_)
-{
-  std::cout << "Pin #" << pin_ << " set to " << (value_ > 0 ? "HIGH" : "LOW") << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void pinMode(int pin_, int mode_)
-{
-  std::cout << "Pin #" << pin_ << " configured as " << (mode_ > 0 ? "OUTPUT" : "INPUT")
-            << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void pinModeAlt(int pin_, int alt_)
-{
-  std::cout << "Pin #" << pin_ << " configured as alt function " << alt_ << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void pullUpDnControl(int pin_, int cfg_)
-{
-  if (cfg_ > 0)
-  {
-    std::cout << "Pin #" << pin_ << " pull-" << (cfg_ == PUD_UP ? "up" : "down") << " enabled"
-              << std::endl;
-  }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-int digitalRead(int pin_)
-{
-  std::cout << "Reading from Pin #" << pin_ << std::endl;
-  return 0;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void wiringPiISR(int pin_, int mode_, void (*fn_)(void))
-{
-  std::cout << "Pin #" << pin_ << " interrupt mode " << mode_ << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-#endif
-
-inline void writeToDisplay(unsigned digit_, char c_, bool dot_)
-{
-  for (unsigned i = 0; i < kDisplayNumDigits; i++)
-  {
-// raffimod - low und high vertauschen
-//  digitalWrite(kPinDisplayDigits[i], (i == digit_ ? LOW : HIGH));
-    digitalWrite(kPinDisplayDigits[i], (i == digit_ ? HIGH : LOW));
-  }
-
-  uint8_t charNum = static_cast<uint8_t>(c_);
-  if ((charNum != 32 && charNum < 45) || charNum > 90)
-  {
-    return;
-  }
-
-  if (charNum == 32)
-  {
-    for (unsigned i = 0; i < kDisplayNumSegments; i++)
-    {
-// raffimod - von LOW auf HIGH umgestellt wegen bubbledisplay replacement ACSA02
-//    digitalWrite(kPinDisplaySegments[i], LOW);
-      digitalWrite(kPinDisplaySegments[i], HIGH);
-    }
-  }
-  else
-  {
-    auto charData = kDisplayFontData[charNum - 45] | (dot_ ? 0b10000000 : 0);
-    for (unsigned i = 0; i < kDisplayNumSegments; i++)
-    {
-// raffimod - von LOW auf HIGH umgestellt wegen bubbledisplay replacement ACSA02
-//    digitalWrite(kPinDisplaySegments[i], ((charData & (1 << i)) > 0) ? HIGH : LOW);
-      digitalWrite(kPinDisplaySegments[i], ((charData & (1 << i)) > 0) ? LOW : HIGH);
-    }
-  }
-}
-
-// -------------------------------------------------------------------------------------------------
-}
+} // namespace
 
 // -------------------------------------------------------------------------------------------------
 
@@ -172,83 +61,51 @@ namespace pi
 
 // -------------------------------------------------------------------------------------------------
 
-// wiringPi only allows to set an ISR handler through a void pointer, a proper solution would be to
-// fork the repository at https://git.drogon.net/?p=wiringPi and change wiringPiISR so that it could
-// take a std::function as third argument, but for the time being we'll live with the horrible
-// global variable below. Don't you dare creating more than one instance of this class (would that
-// make any sense, BTW?)
-UserInterfacePiZero* pInstance;
-
-// -------------------------------------------------------------------------------------------------
-
 UserInterfacePiZero::UserInterfacePiZero(std::shared_ptr<Pink> pink_)
-  : UserInterface(pink_)
-  , m_displayState(DisplayState::tempo)
-  , m_lastEncoderValue(0)
+  : UserInterface(std::move(pink_))
+  , m_display(m_chip, kPinsDisplay, "pinkd-display")
+  , m_leds(m_chip, {kPinLedTempo, kPinLedLength, kPinLedPPQN, kPinLedRunning}, "pinkd-leds")
+  , m_inputs(m_chip,
+      {{kPinEncoderA, 0}, {kPinEncoderB, 0}, {kPinBtnEncoder, kButtonDebounceUs},
+        {kPinBtnRun, kButtonDebounceUs}},
+      "pinkd-inputs")
+  , m_network([this](const std::string& mode_) { showMessage(mode_, kMessageDuration); })
 {
-  pInstance = this;
-
-  wiringPiSetup();
-
-  // setup leds
-  pinMode(kPinLedTempo, OUTPUT);
-  pinMode(kPinLedLength, OUTPUT);
-  pinMode(kPinLedPPQN, OUTPUT);
-  pinMode(kPinLedRunning, OUTPUT);
-
-  // setup encoder
-  pinMode(kPinEncoderA, INPUT);
-  pinMode(kPinEncoderB, INPUT);
-  pinMode(kPinBtnEncoder, INPUT);
-  pullUpDnControl(kPinEncoderA, PUD_UP);
-  pullUpDnControl(kPinEncoderB, PUD_UP);
-  pullUpDnControl(kPinBtnEncoder, PUD_UP);
-
-  wiringPiISR(kPinEncoderA, INT_EDGE_BOTH, encoderHandler);
-  wiringPiISR(kPinEncoderB, INT_EDGE_BOTH, encoderHandler);
-  wiringPiISR(kPinBtnEncoder, INT_EDGE_BOTH, encoderButtonHandler);
-
-  // setup "run" button
-  pullUpDnControl(kPinBtnRun, PUD_UP);
-  pinMode(kPinBtnRun, INPUT);
-  wiringPiISR(kPinBtnRun, INT_EDGE_BOTH, runButtonHandler);
-
-  // setup display
-  for (unsigned i = 0; i < kDisplayNumSegments; i++)
-  {
-    pinMode(kPinDisplaySegments[i], OUTPUT);
-  }
-  for (unsigned i = 0; i < kDisplayNumDigits; i++)
-  {
-    pinMode(kPinDisplayDigits[i], OUTPUT);
-  }
-
-  // setup pwm pins (clock & reset)
-  pinModeAlt(kPinPWM1, 2); // ALT5
-  pinModeAlt(kPinPWM2, 4); // ALT0
-
   {
     std::lock_guard<std::mutex> lock(m_mtxState);
     m_engineTempo = m_pink->tempo();
     m_engineLoopLength = m_pink->loopLength();
     m_engineClockMultiplier = m_pink->clockMultiplierLabel();
+    m_numPeers = m_pink->numPeers();
   }
+  m_engineRunning = m_pink->isPlaying();
+  m_lastEncoderValue
+    = (m_inputs.read(kPinEncoderA) ? 0b10u : 0u) | (m_inputs.read(kPinEncoderB) ? 0b01u : 0u);
 
   registerCallbacks();
 
-  // Only now that wiringPi and all pins are set up may the display thread start writing to GPIO.
-  m_threadDisplay = std::thread(&UserInterfacePiZero::hardwareIO, this);
+  m_threadDisplay = std::thread(&UserInterfacePiZero::displayLoop, this);
+  m_threadInput = std::thread(&UserInterfacePiZero::inputLoop, this);
+
+  startListening();
 }
 
 // -------------------------------------------------------------------------------------------------
 
 UserInterfacePiZero::~UserInterfacePiZero()
 {
-  m_running.store(false);
+  stopListening();
+  m_running = false;
+  if (m_threadInput.joinable())
+  {
+    m_threadInput.join();
+  }
   if (m_threadDisplay.joinable())
   {
     m_threadDisplay.join();
   }
+  m_display.write(0x00FF); // all segments off, no digit selected
+  m_leds.write(0);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -259,10 +116,8 @@ void UserInterfacePiZero::tempoChanged(double t_)
     std::lock_guard<std::mutex> lock(m_mtxState);
     m_engineTempo = t_;
   }
-  m_updateUI.store(true);
+  m_updateUI = true;
 }
-
-// -------------------------------------------------------------------------------------------------
 
 void UserInterfacePiZero::loopLengthChanged(double l_)
 {
@@ -270,10 +125,8 @@ void UserInterfacePiZero::loopLengthChanged(double l_)
     std::lock_guard<std::mutex> lock(m_mtxState);
     m_engineLoopLength = l_;
   }
-  m_updateUI.store(true);
+  m_updateUI = true;
 }
-
-// -------------------------------------------------------------------------------------------------
 
 void UserInterfacePiZero::numPeersChanged(std::size_t n_)
 {
@@ -281,18 +134,14 @@ void UserInterfacePiZero::numPeersChanged(std::size_t n_)
     std::lock_guard<std::mutex> lock(m_mtxState);
     m_numPeers = n_;
   }
-  m_updateUI.store(true);
+  m_updateUI = true;
 }
-
-// -------------------------------------------------------------------------------------------------
 
 void UserInterfacePiZero::runStatusChanged(bool playing_)
 {
   m_engineRunning = playing_;
-  m_updateUI.store(true);
+  m_updateUI = true;
 }
-
-// -------------------------------------------------------------------------------------------------
 
 void UserInterfacePiZero::clockMultiplierChanged(const std::string& cm_)
 {
@@ -300,30 +149,7 @@ void UserInterfacePiZero::clockMultiplierChanged(const std::string& cm_)
     std::lock_guard<std::mutex> lock(m_mtxState);
     m_engineClockMultiplier = cm_;
   }
-  m_updateUI.store(true);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void UserInterfacePiZero::display(int value_)
-{
-  std::string strValue = std::to_string(static_cast<int>(value_));
-  std::string strFill = "";
-  bool showDot = false;
-  if (strValue.length() < 4)
-  {
-    strFill = std::string(4 - strValue.length(), ' ');
-  }
-  else if (strValue.length() > 4)
-  {
-    strValue = "-HI-";
-  }
-
-  {
-    std::lock_guard<std::mutex> lock(m_mtxDisplay);
-    m_displayString = strFill + strValue;
-    m_displayShowDot = showDot;
-  }
+  m_updateUI = true;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -333,7 +159,7 @@ void UserInterfacePiZero::display(double value_)
   double integral;
   double fractional = modf(value_, &integral);
   std::string strValue = std::to_string(static_cast<int>(integral));
-  std::string strFill = "";
+  std::string strFill;
   bool showDot = false;
   if (strValue.length() < 4)
   {
@@ -344,9 +170,8 @@ void UserInterfacePiZero::display(double value_)
       strValue = std::to_string(static_cast<int>(integral + 1));
     }
     std::string strFractional = std::to_string(uFractional);
-    unsigned length = strValue.length() + strFractional.length();
-    unsigned leftFills = length > 4 ? 0 : 4 - length;
-    strFill = std::string(leftFills, ' ');
+    const auto length = strValue.length() + strFractional.length();
+    strFill = std::string(length > 4 ? 0 : 4 - length, ' ');
     strValue.append(strFractional);
     showDot = true;
   }
@@ -355,57 +180,50 @@ void UserInterfacePiZero::display(double value_)
     strValue = "-HI-";
   }
 
-  {
-    std::lock_guard<std::mutex> lock(m_mtxDisplay);
-    m_displayString = strFill + strValue;
-    m_displayShowDot = showDot;
-  }
+  std::lock_guard<std::mutex> lock(m_mtxDisplay);
+  m_displayString = strFill + strValue;
+  m_displayShowDot = showDot;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void UserInterfacePiZero::display(const std::string& value_)
 {
-  std::string strValue(value_);
-  std::string strFill = "";
-  if (strValue.length() < 4)
-  {
-    auto length = strValue.length();
-    auto leftFills = length > 4 ? 0 : 4 - length;
-    strFill = std::string(leftFills, ' ');
-  }
-  else
-  {
-    strValue = strValue.substr(0, 4);
-  }
+  std::string text = value_.substr(0, 4);
+  text = std::string(4 - text.length(), ' ') + text;
+
+  std::lock_guard<std::mutex> lock(m_mtxDisplay);
+  m_displayString = text;
+  m_displayShowDot = false;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void UserInterfacePiZero::showMessage(const std::string& text_, Clock::duration duration_)
+{
   {
     std::lock_guard<std::mutex> lock(m_mtxDisplay);
-    m_displayString = strFill + strValue;
-    m_displayShowDot = false;
+    m_message = text_;
+    m_messageUntil = Clock::now() + duration_;
   }
+  m_updateUI = true;
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void UserInterfacePiZero::registerCallbacks()
 {
-  onEncoderChanged([this](bool clockwise_, bool buttonPressed_) {
-
+  onEncoderChanged([this](bool clockwise_, bool /*buttonPressed_*/) {
     switch (m_displayState.load())
     {
       case DisplayState::tempo:
       {
-        auto tempo = m_pink->tempo();
-        float step = 0.25 * (clockwise_ ? 1. : -1.);
-        tempo += step;
-        m_pink->setTempo(tempo);
+        m_pink->setTempo(m_pink->tempo() + (clockwise_ ? 0.25 : -0.25));
         break;
       }
-
       case DisplayState::length:
       {
-        float step = 0.25 * (clockwise_ ? 1. : -1.);
-        auto loopLength = m_pink->loopLength() + step;
+        const auto loopLength = m_pink->loopLength() + (clockwise_ ? 0.25 : -0.25);
         if (loopLength > 0.)
         {
           m_pink->setLoopLength(loopLength);
@@ -414,34 +232,25 @@ void UserInterfacePiZero::registerCallbacks()
       }
       case DisplayState::ppqn:
       {
-        auto currentMultiplier = m_pink->clockMultiplierIndex();
-        auto numMultipliers = m_pink->numClockMultipliers();
-        if (clockwise_)
+        const auto current = m_pink->clockMultiplierIndex();
+        if (clockwise_ && current + 1 < m_pink->numClockMultipliers())
         {
-          if ((currentMultiplier + 1) < numMultipliers)
-          {
-            m_pink->setClockMultiplierIndex(++currentMultiplier);
-          }
+          m_pink->setClockMultiplierIndex(current + 1);
         }
-        else
+        else if (!clockwise_ && current >= 1)
         {
-          if (currentMultiplier >= 1)
-          {
-            m_pink->setClockMultiplierIndex(--currentMultiplier);
-          }
+          m_pink->setClockMultiplierIndex(current - 1);
         }
         break;
       }
       default:
         break;
     }
-
   });
 
   onRunButtonPressed([this]() { m_pink->togglePlay(); });
 
   onEncoderButtonPressed([this]() {
-
     switch (m_displayState.load())
     {
       case DisplayState::tempo:
@@ -458,21 +267,18 @@ void UserInterfacePiZero::registerCallbacks()
         m_displayState = DisplayState::tempo;
         break;
     }
-    m_updateUI.store(true);
-
+    m_updateUI = true;
   });
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void UserInterfacePiZero::hardwareIO()
+void UserInterfacePiZero::displayLoop()
 {
   unsigned currentDigit = 0;
 
   while (m_running)
   {
-    // Recompute LEDs/text only when something changed. (The old check was inverted and ran
-    // updateUI() on nearly every 500us pass, ~2000 times per second.)
     if (m_updateUI.exchange(false))
     {
       updateUI();
@@ -482,26 +288,44 @@ void UserInterfacePiZero::hardwareIO()
     bool showDot = false;
     {
       std::lock_guard<std::mutex> lock(m_mtxDisplay);
-      if (currentDigit < m_displayString.size())
+      if (!m_message.empty() && Clock::now() >= m_messageUntil)
       {
-        digitChar = m_displayString[currentDigit];
+        m_message.clear();
+        m_updateUI = true; // back to the current page
       }
-      showDot = m_displayShowDot && currentDigit == 2;
+      const auto& text = m_message.empty() ? m_displayString : m_message;
+      const std::string padded = std::string(4 - std::min<std::size_t>(4, text.size()), ' ') + text;
+      digitChar = padded[currentDigit];
+      showDot = m_message.empty() && m_displayShowDot && currentDigit == 2;
     }
 
-    writeToDisplay(currentDigit, digitChar, showDot);
+    writeDigit(currentDigit, digitChar, showDot);
     currentDigit = (currentDigit + 1) % kDisplayNumDigits;
 
-
-    std::this_thread::sleep_for(std::chrono::microseconds(kDisplayRefreshPeriodUs));
+    std::this_thread::sleep_for(kDisplayRefreshPeriod);
   }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+void UserInterfacePiZero::writeDigit(unsigned digit_, char c_, bool dot_)
+{
+  // Segment bits: 1 = off (segments are lit low). Default: all off.
+  std::uint32_t segments = 0xFF;
+  const auto charNum = static_cast<unsigned char>(c_);
+  if (charNum >= kFontFirstChar && charNum <= kFontLastChar)
+  {
+    const auto charData = kDisplayFontData[charNum - kFontFirstChar] | (dot_ ? 0b10000000 : 0);
+    segments = ~static_cast<std::uint32_t>(charData) & 0xFF;
+  }
+  const std::uint32_t digitSelect = 1u << (kDisplayNumSegments + digit_);
+  m_display.write(segments | digitSelect);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 void UserInterfacePiZero::updateUI()
 {
-  // Snapshot the shared state, then format without holding the lock.
   double engineTempo;
   double engineLoopLength;
   std::string engineClockMultiplier;
@@ -514,158 +338,103 @@ void UserInterfacePiZero::updateUI()
     numPeers = m_numPeers;
   }
 
-  setLed(Led::running, m_engineRunning);
+  const auto state = m_displayState.load();
+  m_leds.set(static_cast<std::size_t>(Led::running), m_engineRunning);
+  m_leds.set(static_cast<std::size_t>(Led::tempo), state == DisplayState::tempo);
+  m_leds.set(static_cast<std::size_t>(Led::length), state == DisplayState::length);
+  m_leds.set(static_cast<std::size_t>(Led::ppqn), state == DisplayState::ppqn);
 
-  switch (m_displayState.load())
+  switch (state)
   {
     case DisplayState::tempo:
-    {
-      setLed(Led::tempo, true);
-      setLed(Led::length, false);
-      setLed(Led::ppqn, false);
       display(engineTempo);
       break;
-    }
     case DisplayState::length:
-    {
-      setLed(Led::tempo, false);
-      setLed(Led::length, true);
-      setLed(Led::ppqn, false);
       display(engineLoopLength);
       break;
-    }
     case DisplayState::ppqn:
-    {
-      setLed(Led::tempo, false);
-      setLed(Led::length, false);
-      setLed(Led::ppqn, true);
-
       display(engineClockMultiplier);
       break;
-    }
     case DisplayState::peers:
+    default:
     {
-      setLed(Led::tempo, false);
-      setLed(Led::length, false);
-      setLed(Led::ppqn, false);
-      std::stringstream ss;
+      std::ostringstream ss;
       ss << numPeers << "P";
       display(ss.str());
       break;
     }
-    default:
-      break;
   }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void UserInterfacePiZero::setLed(Led led_, bool state_)
+void UserInterfacePiZero::encoderStep()
 {
-  int value = state_ ? HIGH : LOW;
-  switch (led_)
-  {
-    case Led::tempo:
-    {
-      digitalWrite(kPinLedTempo, value);
-      break;
-    }
-    case Led::length:
-    {
-      digitalWrite(kPinLedLength, value);
-      break;
-    }
-    case Led::ppqn:
-    {
-      digitalWrite(kPinLedPPQN, value);
-      break;
-    }
-    case Led::running:
-    {
-      digitalWrite(kPinLedRunning, value);
-      break;
-    }
-    default:
-    {
-      break;
-    }
-  }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void UserInterfacePiZero::encoderHandler()
-{
-  std::lock_guard<std::mutex> lock(pInstance->m_mtxEncoder);
-  int msb = digitalRead(kPinEncoderA);
-  int lsb = digitalRead(kPinEncoderB);
-  int encoded = (msb << 1) | lsb;
-
+  const unsigned encoded
+    = (m_inputs.read(kPinEncoderA) ? 0b10u : 0u) | (m_inputs.read(kPinEncoderB) ? 0b01u : 0u);
   if (encoded == 0b00)
   {
-    if (pInstance->m_lastEncoderValue == 0b01)
+    if (m_lastEncoderValue == 0b01)
     {
-      pInstance->encoderChanged(true, pInstance->m_encoderButtonPressed);
+      encoderChanged(true, m_encoderButtonDown);
     }
-    else if (pInstance->m_lastEncoderValue == 0b10)
+    else if (m_lastEncoderValue == 0b10)
     {
-      pInstance->encoderChanged(false, pInstance->m_encoderButtonPressed);
+      encoderChanged(false, m_encoderButtonDown);
     }
   }
-
-  pInstance->m_lastEncoderValue = encoded;
+  m_lastEncoderValue = encoded;
 }
 
 // -------------------------------------------------------------------------------------------------
 
-void UserInterfacePiZero::runButtonHandler()
+void UserInterfacePiZero::inputLoop()
 {
-  bool pressed = digitalRead(kPinBtnRun) == HIGH;
-  bool expected = !pressed;
-  if (!pInstance->m_runButtonPressed.compare_exchange_strong(expected, pressed))
+  while (m_running)
   {
-    return;
-  }
-  auto debounce = [pressed]() {
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    if ((digitalRead(kPinBtnRun) == HIGH) == pressed)
+    for (const auto& event : m_inputs.wait(kInputPollTimeout))
     {
-      if (pressed)
+      const bool pressed = !event.rising; // buttons pull to ground
+      if (event.offset == kPinEncoderA || event.offset == kPinEncoderB)
       {
-        pInstance->runButtonPressed();
+        encoderStep();
       }
-
-      pInstance->m_runButtonPressed = pressed;
+      else if (event.offset == kPinBtnRun)
+      {
+        if (pressed)
+        {
+          runButtonPressed(); // on press: starting the clock should not wait for the release
+        }
+      }
+      else if (event.offset == kPinBtnEncoder)
+      {
+        if (pressed)
+        {
+          m_encoderButtonDown = true;
+          m_encoderButtonLongFired = false;
+          m_encoderButtonDownSince = Clock::now();
+        }
+        else if (m_encoderButtonDown)
+        {
+          m_encoderButtonDown = false;
+          if (!m_encoderButtonLongFired)
+          {
+            encoderButtonPressed(); // short press: next page (on release, to tell it from a hold)
+          }
+        }
+      }
     }
-  };
 
-  pInstance->m_runButtonDebouncer = std::async(std::launch::async, debounce);
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void UserInterfacePiZero::encoderButtonHandler()
-{
-  bool pressed = digitalRead(kPinBtnEncoder) == HIGH;
-  bool expected = !pressed;
-  if (!pInstance->m_encoderButtonPressed.compare_exchange_strong(expected, pressed))
-  {
-    return;
-  }
-  auto debounce = [pressed]() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    if ((digitalRead(kPinBtnEncoder) == HIGH) == pressed)
+    if (m_encoderButtonDown && !m_encoderButtonLongFired
+        && Clock::now() - m_encoderButtonDownSince >= kLongPressDuration)
     {
-      if (pressed)
+      m_encoderButtonLongFired = true;
+      if (m_network.toggle())
       {
-        pInstance->encoderButtonPressed();
+        showMessage("----", kSwitchingTimeout); // replaced by the result ("AP" / "NET")
       }
-      pInstance->m_encoderButtonPressed = pressed;
     }
-  };
-
-  pInstance->m_encoderButtonDebouncer = std::async(std::launch::async, debounce);
+  }
 }
 
 // -------------------------------------------------------------------------------------------------
